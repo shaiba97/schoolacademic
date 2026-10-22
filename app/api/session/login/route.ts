@@ -14,12 +14,15 @@ type LoginResponse = {
 };
 
 /**
- * The portals the Academic Affairs workspace opens on. ACADEMIC_ADMIN is
- * the role the ACADEMIC_AFFAIRS position maps to; ADMIN usually carries
- * the module too; custom roles the tenant names after their own position
- * are honoured with the school's own CUSTOM_ prefix.
+ * The roles the Academic Affairs workspace opens on: ACADEMIC_ADMIN (what
+ * the ACADEMIC_AFFAIRS position maps to) and ADMIN. Nothing else — the
+ * students/academic endpoints guard on exactly these two, so admitting any
+ * other slug at sign-in would only produce "Forbidden resource" wizards.
+ * (A legacy CUSTOM_ACADEMIC_ADMIN row in one tenant was normalized to the
+ * real ACADEMIC_ADMIN role on 2026-10-22; custom positions mint
+ * CUSTOM_<random> tokens today and are deliberately not honoured here.)
  */
-const ACADEMIC_ROLES = ["ADMIN", "ACADEMIC_ADMIN", "CUSTOM_ACADEMIC_ADMIN"];
+const ACADEMIC_ROLES = ["ADMIN", "ACADEMIC_ADMIN"];
 
 const SESSION_COOKIE_OPTIONS = (_name: string, value: string, secure: boolean) => {
   return [
