@@ -1,7 +1,4 @@
-import { apiFetch } from "./client";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
-const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID;
+import { academicApiFetch } from "./client";
 
 export type StudentDocumentType = "PROFILE_IMAGE" | "NATIONAL_NUMBER" | "NATIONAL_CARD" | "PASSPORT" | "TRANSFER_RESULT" | "GUARDIAN_ID_PROOF";
 export type TeacherDocumentType = "PROFILE_IMAGE" | "ID_PROOF";
@@ -14,7 +11,7 @@ export function uploadStudentFile(input: { file: File; draftId: string; document
   body.append("documentType", input.documentType);
   if (input.studentId) body.append("studentId", input.studentId);
   if (input.fieldId) body.append("fieldId", input.fieldId);
-  return apiFetch<{ objectKey: string; originalName: string; contentType: string; size: number }>("/storage/upload", { method: "POST", body });
+  return academicApiFetch<{ objectKey: string; originalName: string; contentType: string; size: number }>("/storage/upload", { method: "POST", body });
 }
 
 export function uploadTeacherFile(input: { file: File; draftId: string; documentType: TeacherDocumentType }) {
@@ -22,11 +19,11 @@ export function uploadTeacherFile(input: { file: File; draftId: string; document
   body.append("file", input.file);
   body.append("draftId", input.draftId);
   body.append("documentType", input.documentType);
-  return apiFetch<{ objectKey: string; originalName: string; contentType: string; size: number }>("/storage/upload", { method: "POST", body });
+  return academicApiFetch<{ objectKey: string; originalName: string; contentType: string; size: number }>("/storage/upload", { method: "POST", body });
 }
 
 export function deleteStagedFile(objectKey: string) {
-  return apiFetch<{ deleted: true }>("/storage/staging/delete", { method: "POST", body: JSON.stringify({ objectKey }) });
+  return academicApiFetch<{ deleted: true }>("/storage/staging/delete", { method: "POST", body: JSON.stringify({ objectKey }) });
 }
 
 /**
@@ -39,11 +36,17 @@ export function uploadTeacherCredentialFile(input: { file: File; draftId: string
   body.append("file", input.file);
   body.append("draftId", input.draftId);
   body.append("documentType", "CREDENTIAL");
-  return apiFetch<{ objectKey: string; originalName: string; contentType: string; size: number }>("/storage/upload", { method: "POST", body });
+  return academicApiFetch<{ objectKey: string; originalName: string; contentType: string; size: number }>("/storage/upload", { method: "POST", body });
 }
 
+/**
+ * Downloads ride the same-origin session proxy — the browser cannot set
+ * the Authorization / tenant headers on plain anchors and image tags, so
+ * every download URL goes through /api/backend, which attaches the
+ * session cookie's credentials to the upstream call.
+ */
 export function getFileDownloadUrl(objectKey: string) {
-  return `${API_URL}/storage/download?objectKey=${encodeURIComponent(objectKey)}`;
+  return `/api/backend/storage/download?objectKey=${encodeURIComponent(objectKey)}`;
 }
 
 export function getStudentFileDownloadUrl(objectKey: string) {
@@ -51,8 +54,7 @@ export function getStudentFileDownloadUrl(objectKey: string) {
 }
 
 export async function downloadFile(objectKey: string) {
-  if (!TENANT_ID) throw new Error("NEXT_PUBLIC_TENANT_ID is not configured");
-  const response = await fetch(getFileDownloadUrl(objectKey), { headers: { "X-Tenant-Id": TENANT_ID }, cache: "no-store", credentials: "include" });
+  const response = await fetch(getFileDownloadUrl(objectKey), { cache: "no-store", credentials: "include" });
   if (!response.ok) throw new Error("Unable to download file");
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
@@ -69,7 +71,7 @@ export async function downloadStudentFile(objectKey: string) {
 
 /**
  * Fetch a stored object as a blob for inline display (avatars, previews).
- * Plain `<img src>` / anchors cannot send the tenant header, so binary
+ * Plain `<img src>` / anchors cannot send the session headers, so binary
  * content is loaded here (authenticated + tenant-scoped like everything
  * else) and surfaced as an object URL. Callers must revoke the URL.
  *
@@ -78,8 +80,7 @@ export async function downloadStudentFile(objectKey: string) {
  * up as a permanent loading placeholder rather than an error.
  */
 export async function fetchFileBlob(objectKey: string, signal?: AbortSignal): Promise<Blob> {
-  if (!TENANT_ID) throw new Error("NEXT_PUBLIC_TENANT_ID is not configured");
-  const response = await fetch(getFileDownloadUrl(objectKey), { headers: { "X-Tenant-Id": TENANT_ID }, cache: "no-store", credentials: "include", signal });
+  const response = await fetch(getFileDownloadUrl(objectKey), { cache: "no-store", credentials: "include", signal });
   if (!response.ok) throw new Error(`Unable to load file (status ${response.status})`);
   const blob = await response.blob();
   if (blob.size === 0) throw new Error(`Unable to load file (status ${response.status}, 0 bytes received)`);
@@ -91,7 +92,7 @@ export function uploadExamSample(input: { file: File; draftId: string }) {
   body.append("file", input.file);
   body.append("draftId", input.draftId);
   body.append("documentType", "EXAM_SAMPLE");
-  return apiFetch<{ objectKey: string; originalName: string; contentType: string; size: number }>("/storage/upload", { method: "POST", body });
+  return academicApiFetch<{ objectKey: string; originalName: string; contentType: string; size: number }>("/storage/upload", { method: "POST", body });
 }
 
 export function getExamSampleDownloadUrl(objectKey: string) {

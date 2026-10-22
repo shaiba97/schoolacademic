@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { apiFetch, ApiError } from "@/lib/api/client";
+import { academicApiFetch, ApiError } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ export default function GradingScalePage() {
   async function load() {
     try {
       setLoading(true);
-      const data = await apiFetch<GradingScale[]>("/grading/scales");
+      const data = await academicApiFetch<GradingScale[]>("/grading/scales");
       setScales(data || []);
       setError(null);
     } catch (err) {
@@ -81,12 +81,12 @@ export default function GradingScalePage() {
     setSaving(true);
     try {
       if (editing) {
-        await apiFetch(`/grading/scales/${editing.id}`, {
+        await academicApiFetch(`/grading/scales/${editing.id}`, {
           method: "PUT",
           body: JSON.stringify({ name: name.trim(), description: description.trim() || undefined }),
         });
       } else {
-        await apiFetch("/grading/scales", {
+        await academicApiFetch("/grading/scales", {
           method: "POST",
           body: JSON.stringify({ name: name.trim(), description: description.trim() || undefined }),
         });
@@ -103,7 +103,7 @@ export default function GradingScalePage() {
   async function remove() {
     if (!deleteTarget) return;
     try {
-      await apiFetch(`/grading/scales/${deleteTarget.id}`, { method: "DELETE" });
+      await academicApiFetch(`/grading/scales/${deleteTarget.id}`, { method: "DELETE" });
       setDeleteTarget(null);
       await load();
     } catch (err) {

@@ -3,14 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, School } from "lucide-react";
+import { Menu, X, School, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_SECTIONS } from "@/lib/nav";
+import { useI18n } from "@/lib/i18n/locale-provider";
+import { LanguageToggle } from "@/components/portal/language-toggle";
 import { Breadcrumb } from "./breadcrumb";
 import { SecondaryNav } from "./secondary-nav";
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -19,7 +22,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 print:hidden">
         <div className="flex h-14 items-center gap-3 px-4">
           <button
-            aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+            aria-label={mobileOpen ? t("nav.closeNav") : t("nav.openNav")}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((v) => !v)}
             className="lg:hidden inline-flex size-8 items-center justify-center rounded-lg border hover:bg-muted"
@@ -30,22 +33,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <School size={16} />
             </span>
-            <span className="hidden sm:inline">Academic Affairs</span>
+            <span className="hidden sm:inline">{t("nav.portalTitle")}</span>
           </Link>
-          <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="hidden md:inline rounded-full border px-2.5 py-1 text-xs">Live API</span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
-              <span className="size-6 rounded-full bg-primary/15 flex items-center justify-center text-xs font-medium">AD</span>
-              Admin
-            </span>
+          <div className="ms-auto flex items-center gap-2 text-sm text-muted-foreground">
+            <LanguageToggle />
+            <Link
+              href="/profile"
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
+            >
+              <UserRound size={14} aria-hidden />
+              <span className="hidden sm:inline">{t("nav.profile")}</span>
+            </Link>
           </div>
         </div>
       </header>
 
       <div className="flex">
         {/* Primary sidebar — desktop */}
-        <aside className="hidden lg:flex w-[240px] shrink-0 border-r bg-background flex-col sticky top-14 h-[calc(100vh-56px)] overflow-y-auto print:hidden">
-          <nav className="p-3 flex flex-col gap-1" aria-label="Primary">
+        <aside className="hidden lg:flex w-[240px] shrink-0 border-e bg-background flex-col sticky top-14 h-[calc(100vh-56px)] overflow-y-auto print:hidden">
+          <nav className="p-3 flex flex-col gap-1" aria-label={t("nav.navLabel")}>
             {NAV_SECTIONS.map((section) => {
               const active = pathname === section.href || pathname.startsWith(section.href + "/");
               const Icon = section.icon;
@@ -60,35 +66,29 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   )}
                 >
                   <Icon size={18} className="shrink-0" aria-hidden />
-                  {section.label}
+                  {t(section.labelKey)}
                 </Link>
               );
             })}
           </nav>
-          <div className="mt-auto p-3 border-t">
-            <div className="rounded-lg bg-muted p-3 text-xs leading-relaxed">
-              <p className="font-medium">School Admin</p>
-              <p className="text-muted-foreground">Academic Affairs module.</p>
-            </div>
-          </div>
         </aside>
 
         {/* Mobile drawer */}
         {mobileOpen ? (
           <div className="fixed inset-0 z-30 lg:hidden print:hidden">
-            <button aria-label="Close overlay" className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
-            <aside className="relative w-[280px] h-full bg-background border-r flex flex-col overflow-y-auto shadow-xl">
+            <button aria-label={t("nav.closeNav")} className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
+            <aside className="relative w-[280px] h-full bg-background border-e flex flex-col overflow-y-auto shadow-xl">
               <div className="p-3 flex items-center justify-between border-b">
-                <span className="font-semibold">Menu</span>
+                <span className="font-semibold">{t("nav.mobileLabel")}</span>
                 <button
                   onClick={() => setMobileOpen(false)}
-                  aria-label="Close"
+                  aria-label={t("nav.closeNav")}
                   className="inline-flex size-8 items-center justify-center rounded-lg border"
                 >
                   <X size={16} />
                 </button>
               </div>
-              <nav className="p-3 flex flex-col gap-1" aria-label="Primary mobile">
+              <nav className="p-3 flex flex-col gap-1" aria-label={t("nav.navLabel")}>
                 {NAV_SECTIONS.map((section) => {
                   const active = pathname === section.href || pathname.startsWith(section.href + "/");
                   const Icon = section.icon;
@@ -103,7 +103,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                       )}
                     >
                       <Icon size={18} className="shrink-0" />
-                      {section.label}
+                      {t(section.labelKey)}
                     </Link>
                   );
                 })}

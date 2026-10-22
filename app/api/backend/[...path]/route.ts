@@ -1,38 +1,35 @@
 import type { NextRequest } from "next/server";
-import { academicApiUrl, academicRequestHeaders, AcademicSessionError } from "@/lib/api/session";
+import { academicApiUrl } from "@/lib/api/session";
 
 export const runtime = "nodejs";
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 
-function responseHeaders(source: Headers) {
+function upstreamHeaders(source: Headers) {
   const headers = new Headers();
   const contentType = source.get("content-type");
-  const disposition = source.get("content-disposition");
   if (contentType) headers.set("content-type", contentType);
+  const disposition = source.get("content-disposition");
   if (disposition) headers.set("content-disposition", disposition);
   return headers;
 }
 
 async function proxy(request: NextRequest, context: RouteContext) {
-  let session: { authorization: string; tenantId: string };
-  try {
-    session = academicRequestHeaders(request.headers);
-  } catch (error) {
-    if (error instanceof AcademicSessionError) {
-      return Response.json({ message: error.message }, { status: error.status });
-    }
-    throw error;
+  const token = request.cookies.get("ac_token")?.value;
+  const tenantId = request.cookies.get("ac_tenant")?.value;
+  if (!token || !tenantId) {
+    return Response.json({ message: "Academic session is missing" }, { status: 401 });
   }
 
   const { path } = await context.params;
   const target = new URL(academicApiUrl(`/${path.map((segment) => encodeURIComponent(segment)).join("/")}`));
   target.search = request.nextUrl.search;
 
-  const headers = new Headers();
-  headers.set("Accept", request.headers.get("accept") || "application/json");
-  if (session.authorization) headers.set("Authorization", session.authorization);
-  headers.set("X-Tenant-Id", session.tenantId);
+  const headers = new Headers({
+    Accept: request.headers.get("accept") || "application/json",
+    Authorization: `Bearer ${token}`,
+    "X-Tenant-Id": tenantId,
+  });
   const contentType = request.headers.get("content-type");
   if (contentType) headers.set("Content-Type", contentType);
 
@@ -46,7 +43,7 @@ async function proxy(request: NextRequest, context: RouteContext) {
     });
     return new Response(upstream.body, {
       status: upstream.status,
-      headers: responseHeaders(upstream.headers),
+      headers: upstreamHeaders(upstream.headers),
     });
   } catch {
     return Response.json({ message: "Academic API is unavailable" }, { status: 502 });

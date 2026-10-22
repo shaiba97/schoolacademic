@@ -162,23 +162,23 @@ Log non-obvious choices here instead of silently diverging from spec Â§1-8.
 - No dangling references resulted (0 `teacher.department_id`, 0 `subject.department_id` pointing at missing rows); `subjects` had 0 rows at the time.
 - All 11 were restored by exact name under **new UUIDs** - the originals are unrecoverable (no Neon snapshots, no seed file; they were created at runtime through the API). **Anything holding a pre-2026-09-27 department UUID outside this database is now stale.**
 
-## 2026-10-01 — Examination Center redesign Phase 3 (wizard + detail tabs + room seating)
+## 2026-10-01 ï¿½ Examination Center redesign Phase 3 (wizard + detail tabs + room seating)
 - **New room-assignments UI replaces slot-based RoomsSection on the exam page** (room-assignments-section.tsx): hall-level assignment, auto-seating from ACTIVE enrollments in alpha order, custom student set, invigilator multi-select, seating dialog with name/gender/roll sorts + up/down reorder persisted via PUT order, delete with lock-lift note. Legacy slot-based rooms-section.tsx left untouched (serves dev DBs that have the scheduling tables).
 - **Exam detail is now tabbed** (Subjects | Rooms with count badge); header shows Grouped / By-author / Room-locked badges; Add/Remove subject disabled with tooltip while locked (backend 409 is the real guard). Sample card stays outside the tabs.
 - **ExamWizardDialog mixes classes**: subjects accumulate across class switches, each row badged with its class, review groups by class, submit sends classIds (backend fans out one row per class). ExamsTab prepends all created rows and shows Author + Rooms columns; ClassExamWizard sends classIds:[classId] and narrows the union response.
 - **API layer**: CreateExamPayload.classIds, ApiRoomAssignment/ApiRoomStudent/ApiRoomInvigilator/ApiExamAnalytics types, room endpoints + analytics wired in lib/api/exams.ts.
-- **Lint note**: react-hooks/set-state-in-effect fires on the new file exactly as it does on every untouched examinations file (verified on rooms-section.tsx) — house effect patterns kept, no new warning classes introduced (removed one unused helper).
+- **Lint note**: react-hooks/set-state-in-effect fires on the new file exactly as it does on every untouched examinations file (verified on rooms-section.tsx) ï¿½ house effect patterns kept, no new warning classes introduced (removed one unused helper).
 - **Verification:** tsc clean, next build clean (54 pages).
 
-## 2026-10-01 — Examination Center redesign Phase 4 (tickets/marks/analytics + nav cutover)
-- **Finding: 8 of 10 exam sections were unbuilt skeletons** — only exam-setup was real. So the cutover wires real pages instead of migrating built UI: hall-tickets (exam ? room ? per-seat ticket cards + window.print), marks-results (exam ? subject grid from class enrollments prefilled with drafts, bulk save, publish-gate confirm), analytics (overall cards + subject table, no charts), and a new rooms page (hall registry create/delete + assignments-by-exam overview).
+## 2026-10-01 ï¿½ Examination Center redesign Phase 4 (tickets/marks/analytics + nav cutover)
+- **Finding: 8 of 10 exam sections were unbuilt skeletons** ï¿½ only exam-setup was real. So the cutover wires real pages instead of migrating built UI: hall-tickets (exam ? room ? per-seat ticket cards + window.print), marks-results (exam ? subject grid from class enrollments prefilled with drafts, bulk save, publish-gate confirm), analytics (overall cards + subject table, no charts), and a new rooms page (hall registry create/delete + assignments-by-exam overview).
 - **5-section nav** (lib/nav.ts + hub): Exams, Room Tickets, Marks & Results, Rooms, Analytics. Retired skeleton routes redirect rather than 404: dashboard/settings ? exam-setup, scheduling/invigilation ? rooms, report-cards/re-evaluation ? marks-results. No internal links pointed at retired hrefs (verified by grep). Legacy slot-based rooms-section + print route left untouched (dev DBs with scheduling tables).
-- **Custom Select has no disabled prop** (shadcn-style wrapper) — gated selects render a muted placeholder div until their prerequisite is chosen.
+- **Custom Select has no disabled prop** (shadcn-style wrapper) ï¿½ gated selects render a muted placeholder div until their prerequisite is chosen.
 - **Verification:** tsc + eslint clean on all touched files, next build 55 pages, backend 166/166 jest (unchanged).
 
-## 2026-10-01 — Analytics charts (recharts follow-up)
+## 2026-10-01 ï¿½ Analytics charts (recharts follow-up)
 - **recharts 3.10.1 added (npm, React 19 peers OK):** per-subject average bar + pass-rate bar on the Analytics page above the breakdown table; nulls chart as 0, charts hidden when the exam has no subjects. Verified tsc + eslint + next build (55 pages).
-- **npm audit: 1 critical is pre-existing** (Next.js ImageResponse RCE, fix needs next@16.3.8 outside the pinned range) — untouched per scope discipline; recharts itself introduced no findings.
+- **npm audit: 1 critical is pre-existing** (Next.js ImageResponse RCE, fix needs next@16.3.8 outside the pinned range) ï¿½ untouched per scope discipline; recharts itself introduced no findings.
 - **No frontend unit tests:** academic has no test runner (no jest/vitest/test script); chart mapping is trivial transforms over the analytics payload, verified via type-check + build rather than new infra.
 
 ## 2026-10-02 -- Grade-level subject assignment + class-name-first table
@@ -199,7 +199,7 @@ Log non-obvious choices here instead of silently diverging from spec Â§1-8.
 
 ## 2026-10-03 -- Grade-level subject + teacher assignment tabs
 - **Subjects tab** on grade detail: distinct-subject rows (classes + teachers involved), assign-to-grade via SubjectGradeAssignDialog (now supports subject picker + fixed-grade lock; subjects-page caller unchanged), unassign-from-grade with per-class confirm. Backend untouched (existing assign/remove endpoints; skips + 404s already server-side).
-- **Teachers tab:** flat per class×subject rows (Class | Subject | Teacher) with set/change/clear-teacher via the existing editing dialog and update endpoint (explicit null clears; lib signature widened to string|null). Same subject can carry different teachers per class by construction.
+- **Teachers tab:** flat per classï¿½subject rows (Class | Subject | Teacher) with set/change/clear-teacher via the existing editing dialog and update endpoint (explicit null clears; lib signature widened to string|null). Same subject can carry different teachers per class by construction.
 - **Data:** grade page server-loads subjects + teachers; assignments fan out per grade class with Promise.allSettled and refresh after every mutation. Grade detail owns the Classes/Subjects/Teachers tabs.
 - **Verification:** tsc + eslint clean, next build 56 pages. No backend, DB, or other-module changes.
 
@@ -214,7 +214,7 @@ Log non-obvious choices here instead of silently diverging from spec Â§1-8.
 ## 2026-10-03 -- Track-grouped subject pickers
 - **New subject-track-groups.ts:** case-insensitive includes-matching (Quran/Islamic/Arabic/English/Math common; Physics/Chemistry/Biology/Computer/Engineering science; History/Geography/Military art); unmatched subjects fall into Other so nothing ever disappears; flat single group when no track context.
 - **Grade dialog:** SECOND/THIRD shows Common + Science + Art groups; 1st/Intermediate stay flat. **Per-class dialog:** new optional track prop (wired from class details + grade teachers tab); grouped only for SCIENCE/ART.
-- **Verification:** tsc + eslint clean, next build 56 pages. Labels only — posted subject IDs unchanged; no backend changes.
+- **Verification:** tsc + eslint clean, next build 56 pages. Labels only ï¿½ posted subject IDs unchanged; no backend changes.
 
 ## 2026-10-03 -- Track-restricted grade assignment (correction)
 - **Rule now enforced in the grade dialog:** Science subjects attach only to SCIENCE-track classes, Art only to ART-track, common to all (via trackScopeForSubject; preview list + empty states reflect the restriction). Per-class dialog unchanged.
@@ -225,3 +225,14 @@ Log non-obvious choices here instead of silently diverging from spec Â§1-8.
 - **Full removal:** deleted app/.../academics/classes + classes-client.tsx, dropped the nav entry, landing redirects to grades. Dead-link sweep clean.
 - **Subjects tab trimmed:** [+ Assign subject] removed from class details (update/unassign per row stay; grade-level assignment is the entry point).
 - **Verification:** tsc + eslint clean, next build 55 pages. No backend, DB, or other-module changes.
+
+## 2026-10-22 -- Session layer: Staff-ID sign-in, proxy, and bilingual shell
+- **The portal now signs in its own staff.** Academic Affairs logs in with **Staff ID + password only â€” no email field at all** (explicit product decision 2026-10-22; the earlier "Email or Staff ID" label was removed). `POST /api/session/login` forwards `{staffNumber,password[,tenantId]}` to the backend, which resolves the staff number globally (unique on `User`) and needs no tenant to start. A staff number with **2+ academic memberships** answers `409 {tenants}` and the login card becomes a school picker; no academic access â†’ `403`.
+- **Cookies, not localStorage:** `ac_token` + `ac_tenant` (httpOnly, sameSite lax, 7 days) via `lib/api/session.ts`; `app/api/backend/[...path]/route.ts` swaps them for `Authorization`/`X-Tenant-Id`; `proxy.ts` (Next middleware) guards every path but `/login` + `/api/session/login`. The old shell-injected-header path is gone; raw `apiFetch` was deleted from `lib/api/client.ts` so no page can bypass the session.
+- **The Secure flag follows the request, not `NODE_ENV`.** Marking the cookie `Secure` while the app is served over plain http (a school on the LAN address) makes the browser drop it silently: login "succeeds", every later call 401s, the page spins forever. The route reads `x-forwarded-proto` and only sets `Secure` on a real https request.
+- **A refused session must resolve the spinner.** The profile loader used to `return` early on 401, leaving `loading: true` forever; it now surfaces an error while the proxy redirects to `/login`.
+- **Role gate = slug parity with `transport/`:** `ACADEMIC_ROLES = [ADMIN, ACADEMIC_ADMIN, CUSTOM_ACADEMIC_ADMIN]`, because login memberships carry only `id/name/slug` (no portal field) â€” the same list the transport portal derives from `POSITION_PORTALS`.
+- **i18n is a client dictionary, not next-intl:** `lib/i18n/messages.ts` (en + ar, `MessageKey` union), `lib/i18n/locale-provider.tsx` persists `ac_locale` in localStorage, a pre-paint script in `app/layout.tsx` sets `lang`/`dir` before first render (no flash), BaseUI `DirectionProvider` handles logical direction, `globals.css` adds a Noto Sans Arabic fallback. `lib/nav.ts` sections/breadcrumbs carry `labelKey`; the shell uses logical utilities (`ms-auto`, `border-e`, `rtl:rotate-180`). Language toggle is a plain Button pair (EN/Ø¹Ø±Ø¨ÙŠ) â€” the academic app has no toggle-group ui component.
+- **Profile (`/profile`)** renders `GET /staff/me/profile`: personal card edits first/last/phone via `PUT /auth/me` (**no email field â€” the endpoint does not accept it** and echoes no phone, so the card re-reads after save), school card shows tenant/branch/academic year/role badges, third card is the destructive logout. Header profile link + LanguageToggle added to the shell.
+- **Dashboard (`/dashboard`)** is a live hub: tiles for current academic year, students, classes, subjects (`Promise.all` over the academic read endpoints with per-call fallbacks) + 8 quick-link cards. Storage downloads in `lib/api/storage.ts` now route through `/api/backend/storage/download?objectKey=â€¦` so no page ever holds a direct backend URL.
+- **Verification:** `tsc --noEmit` clean; `npm run lint` 53 problems (baseline at HEAD = 54; the only change is one pre-existing `set-state-in-effect` error fixed in `tenant-locked-notice.tsx`, zero new); `next build` clean; backend `scripts/smoke-academic-portal.ts` **15/15** (ts-node) against the real database; live curl proof: login 200 â†’ proxy profile 200 â†’ email-only payload 400.

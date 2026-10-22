@@ -131,6 +131,11 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
-  }
+@apply font-sans;
+}
+
+/* Arabic runs hand a compact, complete Arabic face ahead of the Latin one. */
+html[lang="ar"] body {
+  font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+}
 }

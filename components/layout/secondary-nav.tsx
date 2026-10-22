@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { findSectionByHref } from "@/lib/nav";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 export function SecondaryNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const section = findSectionByHref(pathname);
   if (!section || section.children.length === 0) return null;
 
@@ -29,7 +31,7 @@ export function SecondaryNav() {
       <div
         className="flex gap-1.5 overflow-x-auto overflow-y-hidden p-1"
         role="tablist"
-        aria-label={`${section.label} sections`}
+        aria-label={t(section.labelKey)}
       >
         {children.map((child) => {
           const active = child.href === activeHref;
@@ -39,7 +41,6 @@ export function SecondaryNav() {
               href={child.href}
               role="tab"
               aria-selected={active}
-              title={child.description}
               className={cn(
                 "whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors border",
                 active
@@ -47,7 +48,7 @@ export function SecondaryNav() {
                   : "bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted",
               )}
             >
-              {child.label}
+              {t(child.labelKey)}
             </Link>
           );
         })}
