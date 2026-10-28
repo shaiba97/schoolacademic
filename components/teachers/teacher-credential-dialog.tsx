@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
-import { NativeSelect } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { FilePicker } from "@/components/ui/file-picker";
 import {
   Dialog,
@@ -14,15 +15,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ApiTeacherCredential, ApiTeacherDocumentSource } from "@/lib/api/types";
+import { useI18n } from "@/lib/i18n/locale-provider";
+import type { MessageKey } from "@/lib/i18n/messages";
 
-const SOURCE_LABELS: Record<ApiTeacherDocumentSource, string> = {
-  ACADEMIC_AFFAIRS: "Uploaded by academic affairs",
-  TEACHER: "Uploaded by the teacher",
-};
-
-export function sourceLabel(source: ApiTeacherDocumentSource | string | undefined) {
-  if (source === "TEACHER") return SOURCE_LABELS.TEACHER;
-  return SOURCE_LABELS.ACADEMIC_AFFAIRS;
+export function sourceLabel(source: ApiTeacherDocumentSource | string | undefined, t: (key: MessageKey) => string) {
+  if (source === "TEACHER") return t("teachers.sourceTeacherUploaded");
+  return t("teachers.sourceAcademicAffairsUploaded");
 }
 
 export type TeacherCredentialDraft = {
@@ -51,15 +49,16 @@ export function TeacherCredentialDialog({
   onOpenChange: (open: boolean) => void;
   onSubmit: (draft: TeacherCredentialDraft) => void;
 }) {
+  const { t } = useI18n();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{credential ? "Edit document" : "Add document"}</DialogTitle>
+          <DialogTitle>{credential ? t("teachers.docEditTitle") : t("teachers.docAddTitle")}</DialogTitle>
           <DialogDescription>
             {credential
-              ? "Rename the document, reassign who supplied it, or replace the file."
-              : "Every document is shown as its own card on the teacher record."}
+              ? t("teachers.docEditDescription")
+              : t("teachers.docAddDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -71,6 +70,7 @@ export function TeacherCredentialDialog({
             credential={credential}
             pending={pending}
             error={error}
+            t={t}
             onCancel={() => onOpenChange(false)}
             onSubmit={onSubmit}
           />
@@ -92,7 +92,9 @@ function CredentialForm({
   error?: string;
   onCancel: () => void;
   onSubmit: (draft: TeacherCredentialDraft) => void;
+  t: (key: MessageKey) => string;
 }) {
+  const { t } = useI18n();
   const isEdit = Boolean(credential);
   const [title, setTitle] = React.useState(credential?.title ?? "");
   const [source, setSource] = React.useState<ApiTeacherDocumentSource>(
@@ -101,8 +103,8 @@ function CredentialForm({
   const [file, setFile] = React.useState<File | null>(null);
   const [touched, setTouched] = React.useState(false);
 
-  const titleError = touched && !title.trim() ? "Give the document a name." : "";
-  const fileError = touched && !isEdit && !file ? "Choose a file to upload." : "";
+  const titleError = touched && !title.trim() ? t("teachers.errorGiveName") : "";
+  const fileError = touched && !isEdit && !file ? t("teachers.errorChooseFile") : "";
   const canSubmit = title.trim().length > 0 && (isEdit || Boolean(file));
 
   function handleSubmit(event: React.FormEvent) {
@@ -115,12 +117,12 @@ function CredentialForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="credential-title">Document name</Label>
+        <Label htmlFor="credential-title">{t("teachers.labelDocName")}</Label>
         <Input
           id="credential-title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="National ID"
+          placeholder={t("teachers.placeholderNationalId")}
           maxLength={150}
           required
           aria-invalid={Boolean(titleError)}
@@ -134,26 +136,26 @@ function CredentialForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="credential-source">Supplied by</Label>
+        <Label htmlFor="credential-source">{t("teachers.labelSuppliedBy")}</Label>
         <NativeSelect
           id="credential-source"
           value={source}
           onChange={(event) => setSource(event.target.value as ApiTeacherDocumentSource)}
         >
-          <option value="ACADEMIC_AFFAIRS">Uploaded by academic affairs</option>
-          <option value="TEACHER">Uploaded by the teacher</option>
+          <option value="ACADEMIC_AFFAIRS">{t("teachers.sourceAcademicAffairsUploaded")}</option>
+          <option value="TEACHER">{t("teachers.sourceTeacherUploaded")}</option>
         </NativeSelect>
       </div>
 
       <FilePicker
         id="credential-file"
-        label={isEdit ? "Replace file (optional)" : "Document file"}
+        label={isEdit ? t("teachers.replaceFileOptional") : t("teachers.labelDocFile")}
         accept="image/*,application/pdf"
         maxSizeMB={10}
         required={!isEdit}
         value={file ? { file, path: "" } : null}
         onChange={(value) => setFile(value?.file ?? null)}
-        helperText="PNG, JPG, WEBP or PDF — max 10MB"
+        helperText={t("teachers.helperDocFile")}
         error={fileError}
       />
 
@@ -165,10 +167,10 @@ function CredentialForm({
 
       <DialogFooter className="gap-2 sm:gap-0">
         <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button type="submit" disabled={pending || !canSubmit}>
-          {pending ? "Saving…" : isEdit ? "Save changes" : "Add document"}
+          {pending ? t("common.saving") : isEdit ? t("teachers.btnSaveChanges") : t("teachers.btnAddDocument")}
         </Button>
       </DialogFooter>
     </form>

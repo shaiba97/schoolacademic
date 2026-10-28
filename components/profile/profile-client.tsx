@@ -20,28 +20,22 @@ export function ProfileClient() {
   const [yearName, setYearName] = React.useState<string | null>(null);
   const [error, setError] = React.useState("");
   const [loading, setLoading] = React.useState(true);
-
-  // Editable personal fields
-  const [firstName, setFirstName] = React.useState("");
-  const [lastName, setLastName] = React.useState("");
-  const [phone, setPhone] = React.useState("");
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [saveError, setSaveError] = React.useState("");
+  const [fullName, setFullName] = React.useState("");
+  const [phone, setPhone] = React.useState("");
 
   const load = React.useCallback(() => {
     getStaffProfile()
       .then((data) => {
         setProfile(data);
-        setFirstName(data.firstName ?? "");
-        setLastName(data.lastName ?? "");
+        setFullName(data.fullName ?? "");
         setPhone(data.phone ?? "");
         setError("");
         setLoading(false);
       })
       .catch((cause) => {
-        // A refused session must not leave the card spinning forever: the
-        // proxy sends the user to the login screen, and the card says why.
         if (cause instanceof ApiError && cause.status === 401) {
           setError(t("profile.unableToLoad"));
           setLoading(false);
@@ -66,8 +60,7 @@ export function ProfileClient() {
     setSaveError("");
     try {
       await updateOwnDetails({
-        firstName: firstName.trim(),
-        lastName: lastName.trim() || undefined,
+        fullName: fullName.trim(),
         phone: phone.trim() || null,
       });
       setSaved(true);
@@ -137,33 +130,13 @@ export function ProfileClient() {
         <CardContent>
           <form onSubmit={handleSave} className="grid gap-4 sm:grid-cols-2" id="profile-form">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="profile-first-name">{t("profile.firstName")}</Label>
+              <Label htmlFor="profile-full-name">{t("profile.fullName")}</Label>
               <Input
-                id="profile-first-name"
-                value={firstName}
-                onChange={(event) => setFirstName(event.target.value)}
+                id="profile-full-name"
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
                 required
               />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="profile-last-name">{t("profile.lastName")}</Label>
-              <Input
-                id="profile-last-name"
-                value={lastName}
-                onChange={(event) => setLastName(event.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="profile-staff-id">{t("profile.staffId")}</Label>
-              <Input id="profile-staff-id" value={profile.staffNumber ?? "—"} readOnly disabled />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="profile-department">{t("profile.department")}</Label>
-              <Input id="profile-department" value={profile.positionTitle} readOnly disabled />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="profile-email">{t("profile.email")}</Label>
-              <Input id="profile-email" type="email" value={profile.email ?? "—"} readOnly disabled />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="profile-phone">{t("profile.phone")}</Label>
@@ -194,7 +167,7 @@ export function ProfileClient() {
         </CardContent>
       </Card>
 
-      {/* Card 2: School & Institution Details */}
+      {/* Card 2: School & Institution Details — simplified, Branch ID and Permissions removed */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">{t("profile.schoolCard")}</CardTitle>
@@ -203,25 +176,7 @@ export function ProfileClient() {
         <CardContent>
           <dl className="flex flex-col divide-y">
             {detail(t("profile.school"), profile.tenant.name)}
-            {detail(t("profile.branchId"), profile.tenant.id, true)}
-            {detail(
-              t("profile.activeYear"),
-              yearName ?? <span className="text-muted-foreground">{t("profile.noYear")}</span>,
-            )}
-            <div className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-              <dt className="text-sm text-muted-foreground">{t("profile.position")}</dt>
-              <dd className="flex flex-wrap justify-end gap-1.5">
-                {profile.roles.length === 0 ? (
-                  <Badge variant="outline">—</Badge>
-                ) : (
-                  profile.roles.map((role) => (
-                    <Badge key={role} variant="secondary" className="font-mono text-xs">
-                      {role}
-                    </Badge>
-                  ))
-                )}
-              </dd>
-            </div>
+            {detail(t("profile.activeYear"), yearName ?? <span className="text-muted-foreground">{t("profile.noYear")}</span>)}
           </dl>
         </CardContent>
       </Card>

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Download, Printer } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,10 +12,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { listStudentGuardians } from "@/lib/api/students";
-import type { ApiStudent, ApiStudentGuardianLink } from "@/lib/api/types";
-import { studentFullName } from "@/lib/api/mappers";
+import { useI18n } from "@/lib/i18n/locale-provider";
 import { formatAcademicDate } from "@/components/academics/academic-utils";
+import { studentFullName } from "@/lib/api/mappers";
+import type { ApiStudent } from "@/lib/api/types";
 
 export function AdmissionRecordDialog({
   student,
@@ -25,71 +26,76 @@ export function AdmissionRecordDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [guardians, setGuardians] = React.useState<ApiStudentGuardianLink[]>([]);
-  const [loading, setLoading] = React.useState(false);
+  const { t } = useI18n();
+  const [showingEnglish, setShowingEnglish] = React.useState(true);
 
-  React.useEffect(() => {
-    if (!open || !student) return;
-    setGuardians([]);
-    setLoading(true);
-    listStudentGuardians(student.id)
-      .then(setGuardians)
-      .catch(() => setGuardians([]))
-      .finally(() => setLoading(false));
-  }, [open, student]);
+  const generateEnglishLetter = (s: ApiStudent) => {
+    const name = studentFullName(s);
+    const rollNo = s.roleNumber ?? "—";
+    const dob = formatAcademicDate(s.dateOfBirth);
+    const gender = s.gender ?? "—";
+    const level = s.educationLevel ?? "—";
+    const grade = s.grade ?? "—";
+    const joined = formatAcademicDate(s.admissionDate ?? s.createdAt);
+    return `This is to certify that ${name}, Roll number ${rollNo}, born on ${dob} (${gender}), has been officially admitted and accepted into ${level} · Grade ${grade} at our institution, effective ${joined}.`;
+  };
+
+  const generateArabicLetter = (s: ApiStudent) => {
+    const name = studentFullName(s);
+    const rollNo = s.roleNumber ?? "—";
+    const dob = formatAcademicDate(s.dateOfBirth);
+    const gender = s.gender ?? "—";
+    const level = s.educationLevel ?? "—";
+    const grade = s.grade ?? "—";
+    const joined = formatAcademicDate(s.admissionDate ?? s.createdAt);
+    return `يشهد بأنه ${name} (رقم القيد: ${rollNo}) المولود بتاريخ ${dob} (${gender})، قد تم قبوله رسمياً في ${level} · الصف ${grade} بمؤسستنا التعليمية واعتماده ${joined}.`;
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Admission record</DialogTitle>
-          <DialogDescription>
-            {student ? `${studentFullName(student)} · ${student.roleNumber}` : ""}
-          </DialogDescription>
+          <DialogTitle>{t("admission.letterHeader")}</DialogTitle>
+          <DialogDescription>{student ? `${studentFullName(student)} · ${student.roleNumber}` : ""}</DialogDescription>
+          <DialogFooter className="justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setShowingEnglish(!showingEnglish)}
+            >
+              {showingEnglish ? t("admission.toggleArabic") : t("admission.toggleEnglish")}
+            </Button>
+          </DialogFooter>
         </DialogHeader>
+
         {student ? (
-          <dl className="space-y-2 text-sm">
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Full name</dt><dd className="font-medium">{studentFullName(student)}</dd></div>
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Role number</dt><dd className="font-mono text-xs">{student.roleNumber}</dd></div>
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Date of birth</dt><dd>{formatAcademicDate(student.dateOfBirth)}</dd></div>
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Gender</dt><dd>{student.gender ?? "—"}</dd></div>
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Level / Grade</dt><dd>{student.educationLevel ?? "—"}{student.grade != null ? ` · Grade ${student.grade}` : ""}</dd></div>
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Phone</dt><dd className="font-mono text-xs">{student.phone ?? "—"}</dd></div>
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Address</dt><dd>{student.address ?? "—"}</dd></div>
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Status</dt><dd>{student.status}</dd></div>
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Joined</dt><dd>{formatAcademicDate(student.admissionDate ?? student.createdAt)}</dd></div>
-            <div className="flex gap-2"><dt className="text-muted-foreground w-32 shrink-0">Guardians</dt>
-              <dd>
-                {loading ? (
-                  <span className="text-muted-foreground">Loading…</span>
-                ) : guardians.length === 0 ? (
-                  <span className="text-muted-foreground">None linked</span>
-                ) : (
-                  <ul className="space-y-1">
-                    {guardians.map((link) => (
-                      <li key={link.guardianId}>
-                        {link.guardian.firstName} {link.guardian.lastName ?? ""}
-                        <span className="text-muted-foreground"> · {link.relationship}{link.isPrimary ? " · Primary" : ""}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </dd>
-            </div>
-          </dl>
+          <div className="space-y-6 text-sm">
+            {showingEnglish ? (
+              <div className="rounded-lg border p-4 text-left">
+                <p className="font-medium text-primary">{t("admission.letterEnglish")}</p>
+                <p dangerouslySetInnerHTML={{ __html: generateEnglishLetter(student) }} className="mt-2 text-muted-foreground break-all" />
+              </div>
+            ) : null}
+            {!showingEnglish ? (
+              <div className="rounded-lg border p-4 text-right">
+                <p className="font-medium text-primary">{t("admission.letterArabic")}</p>
+                <p dangerouslySetInnerHTML={{ __html: generateArabicLetter(student) }} className="mt-2 text-muted-foreground break-all" />
+              </div>
+            ) : null}
+          </div>
         ) : null}
-        <DialogFooter className="gap-2 sm:gap-0">
+
+        <DialogFooter className="gap-2 sm:gap-0" style={{ marginTop: "-1rem" }}>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t("common.close")}
           </Button>
           <Button type="button" variant="outline" onClick={() => window.print()}>
-            <Printer size={14} /> Print
+            <Printer size={14} /> {t("common.print")}
           </Button>
           <Button type="button" onClick={() => window.print()}>
-            <Download size={14} /> Download PDF
+            <Download size={14} /> {t("admission.downloadPdf")}
           </Button>
         </DialogFooter>
-        <p className="text-xs text-muted-foreground">Download opens the print dialog — choose “Save as PDF”.</p>
+        <p className="text-xs text-muted-foreground">{t("admission.downloadHint")}</p>
       </DialogContent>
     </Dialog>
   );

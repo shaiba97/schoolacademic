@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Label } from "./input";
+import { Label } from "./label";
 
 type FormProps = React.FormHTMLAttributes<HTMLFormElement> & { children: React.ReactNode };
 export function Form({ className, children, ...props }: FormProps) {

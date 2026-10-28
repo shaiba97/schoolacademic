@@ -23,6 +23,7 @@ import { DepartmentFormDialog, type DepartmentFormValues } from "@/components/de
 import { createDepartment, deleteDepartment, listDepartments, updateDepartment } from "@/lib/api/departments";
 import type { ApiDepartment, CreateDepartmentPayload } from "@/lib/api/types";
 import { academicErrorMessage } from "@/components/academics/academic-utils";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 export function DepartmentsClient({
   initialData,
@@ -32,6 +33,7 @@ export function DepartmentsClient({
   initialError?: string;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [data, setData] = React.useState(initialData);
   const [error, setError] = React.useState(initialError);
   const [loading, setLoading] = React.useState(false);
@@ -82,7 +84,7 @@ export function DepartmentsClient({
       setFormOpen(false);
       setEditingDepartment(null);
     } catch (cause) {
-      setFormError(academicErrorMessage(cause, "Unable to save department"));
+      setFormError(academicErrorMessage(cause, t("departments.errorSaveFailed")));
     } finally {
       setPending(false);
     }
@@ -97,7 +99,7 @@ export function DepartmentsClient({
       setData((current) => current.filter((department) => department.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (cause) {
-      setError(academicErrorMessage(cause, "Unable to delete department"));
+      setError(academicErrorMessage(cause, t("departments.errorDeleteFailed")));
       setDeleteTarget(null);
     } finally {
       setDeletePending(false);
@@ -111,7 +113,7 @@ export function DepartmentsClient({
       const refreshed = await listDepartments();
       setData(refreshed);
     } catch (cause) {
-      setError(academicErrorMessage(cause, "Unable to load departments"));
+      setError(academicErrorMessage(cause, t("departments.errorLoadFailed")));
     } finally {
       setLoading(false);
     }
@@ -128,13 +130,13 @@ export function DepartmentsClient({
   const columns: Column<ApiDepartment>[] = [
     {
       id: "name",
-      header: "Name",
+      header: t("departments.colName"),
       accessor: (department) => <span className="font-medium">{department.name}</span>,
       sortable: true,
     },
     {
       id: "teachers",
-      header: "Teachers",
+      header: t("departments.colTeachers"),
       accessor: (department) => <Badge variant="outline">{department._count?.teachers ?? 0}</Badge>,
       sortable: true,
     },
@@ -144,11 +146,11 @@ export function DepartmentsClient({
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3 justify-between items-start">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Departments</h1>
-          <p className="text-sm text-muted-foreground mt-1">Academic departments — live from the Academic API.</p>
+          <h1 className="text-xl font-semibold tracking-tight">{t("departments.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("departments.subtitle")}</p>
         </div>
         <Button type="button" onClick={openCreate} disabled={pending}>
-          <Plus size={16} /> Add Department
+          <Plus size={16} /> {t("departments.add")}
         </Button>
       </div>
 
@@ -159,7 +161,7 @@ export function DepartmentsClient({
         >
           <span>{error}</span>
           <Button type="button" variant="outline" size="sm" onClick={() => void retry()} disabled={loading}>
-            Retry
+            {t("common.retry")}
           </Button>
         </div>
       ) : null}
@@ -167,11 +169,11 @@ export function DepartmentsClient({
       <div className="relative max-w-sm">
         <Search size={16} className="absolute left-2.5 top-2.5 text-muted-foreground" aria-hidden />
         <Input
-          placeholder="Search departments…"
+          placeholder={t("departments.searchPlaceholder")}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="pl-8"
-          aria-label="Search departments"
+          aria-label={t("departments.searchAria")}
         />
       </div>
 
@@ -183,9 +185,9 @@ export function DepartmentsClient({
         </div>
       ) : filtered.length === 0 && data.length === 0 ? (
         <EmptyState
-          title="No departments yet"
-          description="Add your first department to start organizing teachers and subjects."
-          action={{ label: "Add Department", onClick: openCreate }}
+          title={t("departments.emptyTitle")}
+          description={t("departments.emptyDescription")}
+          action={{ label: t("departments.emptyAction"), onClick: openCreate }}
         />
       ) : (
         <DataTable
@@ -194,10 +196,10 @@ export function DepartmentsClient({
           getRowId={(department) => department.id}
           onRowClick={(department) => router.push(`/departments/${department.id}`)}
           rowActions={[
-            { label: "View", icon: <Eye size={14} />, onClick: (department) => router.push(`/departments/${department.id}`) },
-            { label: "Edit", icon: <Pencil size={14} />, onClick: openEdit },
+            { label: t("departments.rowView"), icon: <Eye size={14} />, onClick: (department) => router.push(`/departments/${department.id}`) },
+            { label: t("departments.rowEdit"), icon: <Pencil size={14} />, onClick: openEdit },
             {
-              label: "Delete",
+              label: t("departments.rowDelete"),
               icon: <Trash2 size={14} />,
               variant: "destructive",
               onClick: (department) => {
@@ -205,13 +207,13 @@ export function DepartmentsClient({
               },
             },
           ]}
-          emptyTitle="No departments found"
-          emptyDescription="No department records match the current filters."
+          emptyTitle={t("departments.emptyFoundTitle")}
+          emptyDescription={t("departments.emptyFoundDescription")}
         />
       )}
       {loading && data.length > 0 ? (
         <p role="status" className="text-xs text-muted-foreground">
-          Refreshing departments…
+          {t("departments.refreshing")}
         </p>
       ) : null}
 
@@ -240,18 +242,18 @@ export function DepartmentsClient({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete department?</AlertDialogTitle>
+            <AlertDialogTitle>{t("departments.dialogDeleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget?._count?.teachers
-                ? `"${deleteTarget.name}" has ${deleteTarget._count.teachers} teacher(s) assigned. Move those teachers to another department first before deleting.`
-                : `"${deleteTarget?.name}" will be permanently deleted. This cannot be undone.`}
+                ? t("departments.dialogDeleteWithTeachers", { name: deleteTarget.name, count: deleteTarget._count.teachers })
+                : t("departments.dialogDeletePlain", { name: deleteTarget?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteTarget(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeleteTarget(null)}>{t("common.cancel")}</AlertDialogCancel>
             {deleteTarget?._count?.teachers ? null : (
               <AlertDialogAction onClick={() => void handleDelete()}>
-                {deletePending ? "Deleting…" : "Delete"}
+                {t(deletePending ? "departments.actionDeleting" : "departments.actionDelete")}
               </AlertDialogAction>
             )}
           </AlertDialogFooter>

@@ -4,7 +4,8 @@ import * as React from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/native-select";
 import { createDepartment, listDepartments } from "@/lib/api/departments";
 import type { ApiDepartment, BatchSubjectItem } from "@/lib/api/types";
 

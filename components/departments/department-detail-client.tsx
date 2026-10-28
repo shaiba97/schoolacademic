@@ -14,6 +14,7 @@ import { updateDepartment, deleteDepartment } from "@/lib/api/departments";
 import type { ApiDepartment, ApiTeacher, CreateDepartmentPayload } from "@/lib/api/types";
 import { fullName } from "@/lib/api/teachers";
 import { academicErrorMessage } from "@/components/academics/academic-utils";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 export function DepartmentDetailClient({
   department,
@@ -25,6 +26,7 @@ export function DepartmentDetailClient({
   teachersError?: string;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [editOpen, setEditOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [pending, setPending] = React.useState(false);
@@ -41,7 +43,7 @@ export function DepartmentDetailClient({
       router.refresh();
       setEditOpen(false);
     } catch (cause) {
-      setError(academicErrorMessage(cause, "Unable to update department"));
+      setError(academicErrorMessage(cause, t("departments.errorSaveFailed")));
     } finally {
       setPending(false);
     }
@@ -54,7 +56,7 @@ export function DepartmentDetailClient({
       await deleteDepartment(department.id);
       router.push("/departments");
     } catch (cause) {
-      setError(academicErrorMessage(cause, "Unable to delete department"));
+      setError(academicErrorMessage(cause, t("departments.errorDeleteFailed")));
       setDeleteOpen(false);
     } finally {
       setPending(false);
@@ -74,7 +76,7 @@ export function DepartmentDetailClient({
       <Card>
         <CardContent className="p-6">
           <nav className="flex items-center gap-1.5 mb-5 text-sm text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/departments" className="hover:text-foreground">Departments</Link>
+            <Link href="/departments" className="hover:text-foreground">{t("departments.breadcrumb")}</Link>
             <ChevronRight size={14} />
             <span className="text-foreground font-medium truncate">{department.name}</span>
           </nav>
@@ -85,15 +87,17 @@ export function DepartmentDetailClient({
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-semibold tracking-tight">{department.name}</h1>
               <p className="text-sm text-muted-foreground mt-2 flex flex-wrap gap-2 items-center">
-                <Badge variant="secondary">{teacherCount} teacher{teacherCount === 1 ? "" : "s"}</Badge>
+                <Badge variant="secondary">
+                {teacherCount === 1 ? t("departments.teacherOne", { count: teacherCount }) : t("departments.teacherPlural", { count: teacherCount })}
+              </Badge>
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil size={14} /> Edit
+                <Pencil size={14} /> {t("departments.rowEdit")}
               </Button>
               <Button variant="outline" size="sm" onClick={() => setDeleteOpen(true)}>
-                <Trash2 size={14} /> Delete
+                <Trash2 size={14} /> {t("departments.rowDelete")}
               </Button>
             </div>
           </div>
@@ -103,14 +107,14 @@ export function DepartmentDetailClient({
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
-            <Users size={14} /> Teachers
+            <Users size={14} /> {t("departments.teachersCardTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {teachersError ? (
             <p className="text-sm text-destructive">{teachersError}</p>
           ) : teachers.length === 0 ? (
-            <EmptyState title="No teachers in this department" description="Assign teachers to this department from the Teachers page." />
+            <EmptyState title={t("departments.emptyTeachersTitle")} description={t("departments.emptyTeachersDescription")} />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {teachers.map((teacher) => (
@@ -150,18 +154,18 @@ export function DepartmentDetailClient({
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete department?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {teacherCount
-                ? `"${department.name}" has ${teacherCount} teacher(s) assigned. Move those teachers to another department first before deleting.`
-                : `"${department.name}" will be permanently deleted. This cannot be undone.`}
-            </AlertDialogDescription>
+          <AlertDialogTitle>{t("departments.dialogDeleteTitle")}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {teacherCount
+              ? t("departments.dialogDeleteWithTeachers", { name: department.name, count: teacherCount })
+              : t("departments.dialogDeletePlain", { name: department.name })}
+          </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeleteOpen(false)}>{t("common.cancel")}</AlertDialogCancel>
             {teacherCount ? null : (
               <AlertDialogAction onClick={() => void handleDelete()}>
-                {pending ? "Deleting…" : "Delete"}
+                {t(pending ? "departments.actionDeleting" : "departments.actionDelete")}
               </AlertDialogAction>
             )}
           </AlertDialogFooter>

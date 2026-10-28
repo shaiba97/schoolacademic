@@ -3,7 +3,8 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label, Select } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/native-select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { ApiSubject, ApiTeacher } from "@/lib/api/types";
 import { groupSubjectsForTrack } from "./subject-track-groups";
@@ -143,7 +144,7 @@ export function SubjectAssignDialog({
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent open={open} onOpenChange={onOpenChange} side="bottom">
+        <SheetContent side="bottom">
           <SheetHeader>
             <SheetTitle>{dialogTitle}</SheetTitle>
             <SheetDescription>{dialogDescription}</SheetDescription>
@@ -156,7 +157,7 @@ export function SubjectAssignDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent open={open} onOpenChange={onOpenChange} className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>

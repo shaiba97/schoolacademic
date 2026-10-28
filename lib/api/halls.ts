@@ -1,5 +1,5 @@
 import { academicApiFetch } from "./client";
-import type { ApiHall, CreateHallPayload } from "./types";
+import type { ApiHall, ApiSchoolClass, CreateHallPayload } from "./types";
 
 export function listHalls() {
   return academicApiFetch<ApiHall[]>("/halls");

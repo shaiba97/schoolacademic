@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/native-select";
 
 const educationLevels = ["SECONDARY", "INTERMEDIATE"] as const;
 const secondaryGrades = ["FIRST", "SECOND", "THIRD"] as const;

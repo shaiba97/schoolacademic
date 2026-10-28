@@ -4,6 +4,7 @@ import * as React from "react";
 import { Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n/locale-provider";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ export function DepartmentFormDialog({
   error?: { form?: string };
   onSubmit: (values: DepartmentFormValues) => void;
 }) {
+  const { t } = useI18n();
   const [name, setName] = React.useState(defaultValues?.name ?? "");
 
   React.useEffect(() => {
@@ -46,11 +48,11 @@ export function DepartmentFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit department" : "Add department"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("departments.formEditTitle") : t("departments.formAddTitle")}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Rename this department. Teachers assigned to it keep their assignment."
-              : "Create a department to group teachers and subjects together. Names must be unique."}
+              ? t("departments.formEditDescription")
+              : t("departments.formAddDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -63,12 +65,12 @@ export function DepartmentFormDialog({
           }}
         >
           <div className="space-y-2">
-            <label htmlFor="department-name" className="text-sm font-medium">Name</label>
+            <label htmlFor="department-name" className="text-sm font-medium">{t("departments.formNameLabel")}</label>
             <Input
               id="department-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Arabic Language"
+              placeholder={t("departments.formNamePlaceholder")}
               autoFocus
               required
             />
@@ -80,10 +82,11 @@ export function DepartmentFormDialog({
 
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-              <X size={14} /> Cancel
+              <X size={14} /> {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={pending || !name.trim()}>
-              <Save size={14} /> {pending ? "Saving…" : isEdit ? "Save changes" : "Create department"}
+              <Save size={14} />
+              {pending ? t("common.saving") : isEdit ? t("departments.formSaveEdit") : t("departments.formSaveCreate")}
             </Button>
           </DialogFooter>
         </form>

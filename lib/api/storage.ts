@@ -53,6 +53,21 @@ export function getStudentFileDownloadUrl(objectKey: string) {
   return getFileDownloadUrl(objectKey);
 }
 
+/**
+ * Storage keys are prefixed with machine UUIDs (one per staging hop) for
+ * uniqueness. Those UUIDs must never leak into filenames a user sees or
+ * downloads — strip every leading `{uuid}-` run, e.g.
+ * `a0dd9537-…-2de7e35b-…-Mathematics-Test.pdf` → `Mathematics-Test.pdf`.
+ */
+export function friendlyFileName(objectKey: string, fallback = "download"): string {
+  const leaf = objectKey.split("/").pop() ?? "";
+  const stripped = leaf.replace(
+    /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-)+/i,
+    "",
+  );
+  return stripped || fallback;
+}
+
 export async function downloadFile(objectKey: string) {
   const response = await fetch(getFileDownloadUrl(objectKey), { cache: "no-store", credentials: "include" });
   if (!response.ok) throw new Error("Unable to download file");
@@ -60,7 +75,7 @@ export async function downloadFile(objectKey: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = objectKey.split("/").pop() || "download";
+  anchor.download = friendlyFileName(objectKey);
   anchor.click();
   URL.revokeObjectURL(url);
 }

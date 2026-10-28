@@ -1,5 +1,11 @@
 import { academicApiFetch } from "./client";
-import type { ApiAdmissionResponse, ApiEnrollmentRecord, ApiGuardianSummary, ApiPaginated, ApiReferenceData, ApiStudent, ApiStudentAttendanceRecord, ApiStudentGuardianLink, ApiStudentResult, CreateAdmissionPayload, CreateStudentPayload, StudentListQuery, UpdateStudentPayload } from "./types";
+import type { ApiAdmissionResponse, ApiEnrollmentRecord, ApiGuardianSummary, ApiPaginated, ApiReferenceData, ApiStudent, ApiStudentAttendanceRecord, ApiStudentGuardianLink, ApiStudentResult, ApiTenantResult, CreateAdmissionPayload, CreateStudentPayload, StudentListQuery, UpdateStudentPayload } from "./types";
+
+export function listTenantResults(query: { examTypeId?: string } = {}) {
+  const params = new URLSearchParams();
+  if (query.examTypeId) params.set("examTypeId", query.examTypeId);
+  return academicApiFetch<ApiTenantResult[]>(`/students/results/board${`?${params.toString()}`}`);
+}
 
 export function listStudents(query: StudentListQuery = {}) {
   const params = new URLSearchParams();

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Download, FileText, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Download, FileText, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,8 +34,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { addExamSubject, removeExamSubject, updateExam } from "@/lib/api/exams";
-import { deleteStagedFile, downloadExamSampleFile, uploadExamSample } from "@/lib/api/storage";
+import { addExamSubject, publishExamResults, removeExamSubject, updateExam } from "@/lib/api/exams";
+import { deleteStagedFile, downloadExamSampleFile, friendlyFileName, uploadExamSample } from "@/lib/api/storage";
 import { RoomAssignmentsSection } from "@/components/examinations/room-assignments-section";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FilePicker } from "@/components/ui/file-picker";
@@ -51,6 +51,18 @@ import type {
   ApiClassSubject,
 } from "@/lib/api/types";
 import { academicErrorMessage } from "@/components/academics/academic-utils";
+
+const EXAM_STATUS_OPTIONS: ReadonlyArray<readonly [string, string]> = [
+  ["DRAFT", "Draft"],
+  ["SCHEDULED", "Scheduled"],
+  ["ONGOING", "Ongoing"],
+  ["MARKS_OPEN", "Marks open"],
+  ["MODERATION", "Moderation"],
+  ["COMPLETED", "Completed"],
+  ["PROCESSED", "Processed"],
+  ["PUBLISHED", "Published"],
+  ["CLOSED", "Closed"],
+];
 
 export function ExamDetailClient({
   exam,
@@ -75,6 +87,31 @@ export function ExamDetailClient({
   const [sampleError, setSampleError] = React.useState("");
   const sampleDraftId = React.useMemo(() => crypto.randomUUID(), []);
   const [loadError, setLoadError] = React.useState("");
+
+  // Exam status: local so select changes reflect instantly and revert on failure.
+  const [status, setStatus] = React.useState(exam.status);
+  const [statusBusy, setStatusBusy] = React.useState(false);
+  const [statusError, setStatusError] = React.useState("");
+
+  async function handleStatusChange(next: string) {
+    if (next === status) return;
+    setStatusBusy(true);
+    setStatusError("");
+    try {
+      // PUBLISHED goes through the dedicated publish route so publishedAt
+      // and its side effects stay intact; everything else is a plain PUT.
+      if (next === "PUBLISHED") {
+        await publishExamResults(exam.id);
+      } else {
+        await updateExam(exam.id, { status: next });
+      }
+      setStatus(next);
+    } catch (cause) {
+      setStatusError(academicErrorMessage(cause, "Unable to change the exam status"));
+    } finally {
+      setStatusBusy(false);
+    }
+  }
 
   const [editName, setEditName] = React.useState(exam.name);
   const [editTypeId, setEditTypeId] = React.useState(exam.examTypeId ?? "");
@@ -195,9 +232,9 @@ export function ExamDetailClient({
     : "";
   const roomLocked = rooms.length > 0;
 
-  function sampleFileName() {
-    return exam.sampleObjectKey?.split("/").pop() ?? "sample.pdf";
-  }
+function sampleFileName() {
+  return friendlyFileName(exam.sampleObjectKey ?? "", "sample.pdf");
+}
 
   async function handleSamplePick(value: { file: File; previewUrl?: string; path: string } | null) {
     if (!value) return;
@@ -267,9 +304,28 @@ export function ExamDetailClient({
               <h1 className="text-xl font-semibold tracking-tight">{exam.name}</h1>
               <p className="text-sm text-muted-foreground mt-2 flex flex-wrap gap-2 items-center">
                 {exam.examType ? <Badge variant="outline">{exam.examType.name}</Badge> : null}
-                <Badge variant={exam.status === "PUBLISHED" ? "success" : exam.status === "DRAFT" ? "muted" : "secondary"}>
-                  {exam.status}
+                <Badge variant={status === "PUBLISHED" ? "success" : status === "DRAFT" ? "muted" : "secondary"}>
+                  {status}
                 </Badge>
+                <span className="inline-flex items-center gap-1">
+                  {statusBusy ? <Loader2 size={12} className="animate-spin" aria-hidden /> : null}
+                  <Select
+                    value={status}
+                    onValueChange={(v) => void handleStatusChange(v)}
+                    disabled={statusBusy}
+                  >
+                    <SelectTrigger className="h-6 px-2 text-xs" aria-label="Change exam status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXAM_STATUS_OPTIONS.map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </span>
                 <Badge variant="secondary">{subjects.length} subject{subjects.length === 1 ? "" : "s"}</Badge>
                 {exam.examGroupId ? (
                   <Badge variant="outline" title="Created together with one row per class">Grouped</Badge>
@@ -281,6 +337,9 @@ export function ExamDetailClient({
                   <Badge variant="secondary" title="Rooms are assigned — subjects can no longer change">Room-locked</Badge>
                 ) : null}
               </p>
+              {statusError ? (
+                <p role="alert" className="mt-2 text-xs text-destructive">{statusError}</p>
+              ) : null}
               <p className="text-xs text-muted-foreground mt-1">
                 {exam.startsOn?.slice(0, 10) ?? "—"} → {exam.endsOn?.slice(0, 10) ?? "—"}
               </p>

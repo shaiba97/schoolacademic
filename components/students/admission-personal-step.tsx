@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { Switch } from "@/components/ui/switch";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/native-select";
 import { FilePicker } from "@/components/ui/file-picker";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Gender } from "@/lib/admission";

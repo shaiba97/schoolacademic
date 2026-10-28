@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, School, UserRound } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_SECTIONS } from "@/lib/nav";
 import { useI18n } from "@/lib/i18n/locale-provider";
@@ -18,39 +18,38 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 print:hidden">
+      {/* Top bar — mobile only */}
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:hidden print:hidden">
         <div className="flex h-14 items-center gap-3 px-4">
           <button
             aria-label={mobileOpen ? t("nav.closeNav") : t("nav.openNav")}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((v) => !v)}
-            className="lg:hidden inline-flex size-8 items-center justify-center rounded-lg border hover:bg-muted"
+            className="inline-flex size-8 items-center justify-center rounded-lg border hover:bg-muted"
           >
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <School size={16} />
-            </span>
-            <span className="hidden sm:inline">{t("nav.portalTitle")}</span>
+          <Link href="/dashboard" className="font-semibold tracking-tight">
+            {t("nav.portalTitle")}
           </Link>
-          <div className="ms-auto flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="ms-auto">
             <LanguageToggle />
-            <Link
-              href="/profile"
-              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
-            >
-              <UserRound size={14} aria-hidden />
-              <span className="hidden sm:inline">{t("nav.profile")}</span>
-            </Link>
           </div>
         </div>
       </header>
 
       <div className="flex">
         {/* Primary sidebar — desktop */}
-        <aside className="hidden lg:flex w-[240px] shrink-0 border-e bg-background flex-col sticky top-14 h-[calc(100vh-56px)] overflow-y-auto print:hidden">
+        <aside className="hidden lg:flex w-[240px] shrink-0 border-e bg-background flex-col sticky top-0 h-dvh overflow-y-auto print:hidden">
+          <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
+            <Link
+              href="/dashboard"
+              className="truncate font-semibold tracking-tight text-foreground"
+            >
+              {t("nav.portalTitle")}
+            </Link>
+            <LanguageToggle className="shrink-0" />
+          </div>
           <nav className="p-3 flex flex-col gap-1" aria-label={t("nav.navLabel")}>
             {NAV_SECTIONS.map((section) => {
               const active = pathname === section.href || pathname.startsWith(section.href + "/");
@@ -79,7 +78,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <button aria-label={t("nav.closeNav")} className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
             <aside className="relative w-[280px] h-full bg-background border-e flex flex-col overflow-y-auto shadow-xl">
               <div className="p-3 flex items-center justify-between border-b">
-                <span className="font-semibold">{t("nav.mobileLabel")}</span>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="font-semibold tracking-tight"
+                >
+                  {t("nav.portalTitle")}
+                </Link>
                 <button
                   onClick={() => setMobileOpen(false)}
                   aria-label={t("nav.closeNav")}

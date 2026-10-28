@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Label, Select } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/native-select";
 import { updateClassSubjectTeacher } from "@/lib/api/subjects";
 import type { ApiClassSubject, ApiSchoolClass, ApiSubject, ApiTeacher } from "@/lib/api/types";
 import { academicErrorMessage } from "./academic-utils";
@@ -283,7 +284,7 @@ function SetTeacherDialog({
 
   return (
     <Dialog open onOpenChange={(o) => { if (!pending && !o) onClose(); }}>
-      <DialogContent open onOpenChange={(o) => { if (!pending && !o) onClose(); }} className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Set teacher</DialogTitle>
           <DialogDescription>Choose a class, one of its subjects, then the teacher for that class and subject.</DialogDescription>

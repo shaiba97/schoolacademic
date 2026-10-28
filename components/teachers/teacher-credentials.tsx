@@ -16,6 +16,7 @@ import {
   updateTeacherCredential,
 } from "@/lib/api/teachers";
 import { academicErrorMessage } from "@/components/academics/academic-utils";
+import { useI18n } from "@/lib/i18n/locale-provider";
 import type { ApiTeacherCredential } from "@/lib/api/types";
 
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
@@ -44,6 +45,7 @@ export function TeacherCredentials({
   const [editing, setEditing] = React.useState<ApiTeacherCredential | null>(null);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState("");
+  const { t } = useI18n();
 
   // Re-sync during render rather than in an effect: when the server hands us a
   // new teacher payload, local edits are discarded without a cascading render.
@@ -76,11 +78,11 @@ export function TeacherCredentials({
 
       if (draft.file) {
         if (!ACCEPTED_TYPES.has(draft.file.type)) {
-          setError("Unsupported file type — choose a PNG, JPG, WEBP or PDF.");
+          setError(t("teachers.errorUnsupportedType"));
           return;
         }
         if (draft.file.size === 0) {
-          setError("That file is empty — choose a different file.");
+          setError(t("common.errorFileEmpty"));
           return;
         }
         const stored = await uploadTeacherCredentialFile({ file: draft.file, draftId: draftId() });
@@ -107,7 +109,7 @@ export function TeacherCredentials({
       setEditing(null);
     } catch (cause) {
       if (stagedKey) await deleteStagedFile(stagedKey).catch(() => undefined);
-      setError(academicErrorMessage(cause, "Unable to save the document"));
+      setError(academicErrorMessage(cause, t("teachers.errorSaveDoc")));
     } finally {
       setPending(false);
     }
@@ -122,7 +124,7 @@ export function TeacherCredentials({
       await deleteTeacherCredential(teacherId, credential.id);
     } catch (cause) {
       setCredentials(previous);
-      setError(academicErrorMessage(cause, "Unable to delete the document"));
+      setError(academicErrorMessage(cause, t("teachers.errorDeleteDoc")));
     } finally {
       setPending(false);
     }
@@ -133,14 +135,12 @@ export function TeacherCredentials({
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <CardTitle className="text-sm">Identification</CardTitle>
-            <CardDescription>
-              Every document on this teacher record, whether filed by academic affairs or by the teacher.
-            </CardDescription>
+            <CardTitle className="text-sm">{t("teachers.credentialsTitle")}</CardTitle>
+            <CardDescription>{t("teachers.credentialsDescription")}</CardDescription>
           </div>
           {canEdit ? (
             <Button type="button" size="sm" onClick={openCreate} disabled={pending}>
-              <FilePlus2 size={14} aria-hidden /> Add document
+              <FilePlus2 size={14} aria-hidden /> {t("teachers.addDocument")}
             </Button>
           ) : null}
         </div>
@@ -155,13 +155,13 @@ export function TeacherCredentials({
 
         {credentials.length === 0 ? (
           <div role="status" className="rounded-lg border border-dashed p-6 text-center">
-            <p className="text-sm font-medium">No documents yet</p>
+            <p className="text-sm font-medium">{t("teachers.noDocsTitle")}</p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              Add the teacher&apos;s national ID, passport, or certifications so they can be viewed here.
+              {t("teachers.noDocsDescription")}
             </p>
             {canEdit ? (
               <Button type="button" className="mt-4" onClick={openCreate} disabled={pending}>
-                <FilePlus2 size={14} aria-hidden /> Add the first document
+                <FilePlus2 size={14} aria-hidden /> {t("teachers.addFirstDocument")}
               </Button>
             ) : null}
           </div>

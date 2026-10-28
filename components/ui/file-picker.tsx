@@ -4,6 +4,7 @@ import * as React from "react";
 import { Upload, X, FileText, Image as ImageIcon, AlertCircle } from "lucide-react";
 import { Button } from "./button";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 type FileValue = { file: File; previewUrl?: string; path: string };
 
@@ -19,8 +20,6 @@ export type FilePickerProps = {
   error?: string;
 };
 
-const MAX_DIMENSIONS_NOTE = "Image dimensions sanity: max 4000×4000 recommended";
-
 function isImage(file: File) {
   return file.type.startsWith("image/");
 }
@@ -35,13 +34,14 @@ export function FilePicker({ id, label, accept, maxSizeMB, required, value, onCh
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = React.useState(false);
   const [localError, setLocalError] = React.useState<string | null>(null);
+  const { t } = useI18n();
 
   const displayError = error ?? localError;
 
   function validate(file: File): string | null {
     const maxBytes = maxSizeMB * 1024 * 1024;
-    if (file.size === 0) return "This file is empty — choose a different file.";
-    if (file.size > maxBytes) return `File too large: ${formatSize(file.size)} > ${maxSizeMB}MB`;
+    if (file.size === 0) return t("common.errorFileEmpty");
+    if (file.size > maxBytes) return t("common.errorFileTooLarge", { size: formatSize(file.size), max: maxSizeMB });
     // accept check — allow wildcard image/* handling
     const accepts = accept
       .split(",")
@@ -53,7 +53,7 @@ export function FilePicker({ id, label, accept, maxSizeMB, required, value, onCh
       return file.type === a || file.name.toLowerCase().endsWith(a.replace(".", "").toLowerCase());
     });
     // also allow pdf extension check fallback
-    if (!ok && file.type) return `Invalid type: ${file.type}. Expected ${accept}`;
+    if (!ok && file.type) return t("common.errorInvalidType", { type: file.type, accept });
     return null;
   }
 
@@ -88,7 +88,7 @@ export function FilePicker({ id, label, accept, maxSizeMB, required, value, onCh
   return (
     <div className="space-y-1.5">
       <label htmlFor={id} className="text-sm font-medium leading-none">
-        {label} {required ? <span className="text-destructive" aria-hidden>*</span> : <span className="text-muted-foreground font-normal text-xs"> (optional)</span>}
+        {label} {required ? <span className="text-destructive" aria-hidden>*</span> : <span className="text-muted-foreground font-normal text-xs">{t("common.optional")}</span>}
       </label>
 
       {!value ? (
@@ -113,12 +113,12 @@ export function FilePicker({ id, label, accept, maxSizeMB, required, value, onCh
             dragOver ? "bg-muted border-primary" : "hover:bg-muted/50",
             displayError ? "border-destructive bg-destructive/5" : undefined,
           )}
-          aria-label={`${label} file picker`}
+          aria-label={t("common.ariaFilePicker", { label })}
         >
           <Upload size={20} className="mx-auto text-muted-foreground" aria-hidden />
-          <p className="text-sm font-medium mt-2">Click to choose or drag file here</p>
-          <p className="text-xs text-muted-foreground mt-1">{helperText ?? `Accept: ${accept} · Max ${maxSizeMB}MB`}</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">{MAX_DIMENSIONS_NOTE}</p>
+          <p className="text-sm font-medium mt-2">{t("common.filePickerChoose")}</p>
+          <p className="text-xs text-muted-foreground mt-1">{helperText ?? t("common.filePickerAccept", { accept, maxSizeMB })}</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">{t("common.filePickerMaxDims")}</p>
         </div>
       ) : (
         <div className="rounded-lg border bg-card p-3 flex items-start gap-3">
@@ -132,11 +132,11 @@ export function FilePicker({ id, label, accept, maxSizeMB, required, value, onCh
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{value.file.name}</p>
-            <p className="text-xs text-muted-foreground">{formatSize(value.file.size)} · {value.file.type || "unknown type"}</p>
+            <p className="text-xs text-muted-foreground">{formatSize(value.file.size)} · {value.file.type || t("common.fileTypeUnknown")}</p>
             <p className="text-xs text-muted-foreground truncate mt-0.5">{value.path}</p>
-            <p className="text-xs text-muted-foreground/70 mt-1">Staged in draft temp — finalized on final wizard submit (§3)</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">{t("common.filePickerStaged")}</p>
           </div>
-          <Button variant="ghost" size="icon-sm" aria-label={`Remove ${label}`} onClick={() => onChange(null)}>
+          <Button variant="ghost" size="icon-sm" aria-label={t("common.ariaRemoveFile", { label })} onClick={() => onChange(null)}>
             <X size={16} />
           </Button>
         </div>
@@ -147,7 +147,7 @@ export function FilePicker({ id, label, accept, maxSizeMB, required, value, onCh
       {/* Replace action when file selected */}
       {value ? (
         <button type="button" onClick={() => inputRef.current?.click()} className="text-xs text-primary hover:underline">
-          Replace file
+          {t("common.filePickerReplace")}
         </button>
       ) : null}
 

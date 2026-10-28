@@ -17,6 +17,7 @@ import { uploadTeacherFile, deleteStagedFile } from "@/lib/api/storage";
 import { TeacherAvatar } from "@/components/teachers/teacher-avatar";
 import type { ApiDepartment, ApiPaginated, ApiTeacher, CreateTeacherPayload, TeacherDocumentPayload } from "@/lib/api/types";
 import { academicErrorMessage } from "@/components/academics/academic-utils";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 function formatDOB(dob?: string | null) {
   if (!dob) return "—";
@@ -29,6 +30,7 @@ function formatDOB(dob?: string | null) {
 
 export function TeachersClient({ initialData, departments = [], initialError = "" }: { initialData: ApiPaginated<ApiTeacher>; departments?: ApiDepartment[]; initialError?: string }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [data, setData] = React.useState(initialData);
   const [error, setError] = React.useState(initialError);
   const [loading, setLoading] = React.useState(false);
@@ -117,7 +119,7 @@ export function TeachersClient({ initialData, departments = [], initialError = "
       setEditingTeacher(null);
     } catch (cause) {
       await Promise.all(stagedKeys.map((objectKey) => deleteStagedFile(objectKey).catch(() => undefined)));
-      setFormError(academicErrorMessage(cause, "Unable to save teacher"));
+      setFormError(academicErrorMessage(cause, t("teachers.errorSaveFailed")));
     } finally {
       setPending(false);
     }
@@ -136,7 +138,7 @@ export function TeachersClient({ initialData, departments = [], initialError = "
       }));
       setStatusTarget(null);
     } catch (cause) {
-      setError(academicErrorMessage(cause, "Unable to update teacher status"));
+      setError(academicErrorMessage(cause, t("teachers.errorStatusFailed")));
     } finally {
       setStatusPending(false);
     }
@@ -159,7 +161,7 @@ export function TeachersClient({ initialData, departments = [], initialError = "
       setDeleteTarget(null);
     } catch (cause) {
       setData(snapshot);
-      setError(academicErrorMessage(cause, "Unable to delete teacher"));
+      setError(academicErrorMessage(cause, t("teachers.errorDeleteFailed")));
     } finally {
       setDeletePending(false);
     }
@@ -172,7 +174,7 @@ export function TeachersClient({ initialData, departments = [], initialError = "
       const refreshed = await listTeachers({ page: 1, limit: 100 });
       setData(refreshed);
     } catch (cause) {
-      setError(academicErrorMessage(cause, "Unable to load teachers"));
+      setError(academicErrorMessage(cause, t("teachers.errorLoadFailed")));
     } finally {
       setLoading(false);
     }
@@ -191,7 +193,7 @@ export function TeachersClient({ initialData, departments = [], initialError = "
   const columns: Column<ApiTeacher>[] = [
     {
       id: "teacher",
-      header: "Teacher",
+      header: t("teachers.colTeacher"),
       accessor: (teacher) => {
         const photo = profileImageDocument(teacher);
         return (
@@ -205,25 +207,25 @@ export function TeachersClient({ initialData, departments = [], initialError = "
     },
     {
       id: "employeeNumber",
-      header: "Employee No",
+      header: t("teachers.colEmployeeNo"),
       accessor: (teacher) => <span className="font-mono text-xs">{teacher.employeeNumber || "—"}</span>,
       sortable: true,
     },
     {
       id: "department",
-      header: "Department",
+      header: t("teachers.colDepartment"),
       accessor: (teacher) => <Badge variant="outline">{deptName(teacher, departments)}</Badge>,
       sortable: true,
     },
     {
       id: "phone",
-      header: "Phone",
+      header: t("teachers.colPhone"),
       accessor: (teacher) => <span className="font-mono text-xs">{teacher.user?.phone || "—"}</span>,
       sortable: true,
     },
     {
       id: "dateOfBirth",
-      header: "Date of Birth",
+      header: t("teachers.colDateOfBirth"),
       accessor: (teacher) => <span className="text-sm">{formatDOB(teacher.dateOfBirth)}</span>,
       sortable: true,
     },
@@ -249,31 +251,31 @@ export function TeachersClient({ initialData, departments = [], initialError = "
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3 justify-between items-start">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Teachers</h1>
-          <p className="text-sm text-muted-foreground mt-1">Teacher profiles, files and account status — live from the Academic API.</p>
+          <h1 className="text-xl font-semibold tracking-tight">{t("teachers.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("teachers.subtitle")}</p>
         </div>
-        <Button type="button" onClick={openCreate} disabled={pending}><Plus size={16} /> Add Teacher</Button>
+        <Button type="button" onClick={openCreate} disabled={pending}><Plus size={16} /> {t("teachers.add")}</Button>
       </div>
 
       {error ? (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
           <span>{error}</span>
-          <Button type="button" variant="outline" size="sm" onClick={() => void retry()} disabled={loading}>Retry</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => void retry()} disabled={loading}>{t("common.retry")}</Button>
         </div>
       ) : null}
 
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search size={16} className="absolute left-2.5 top-2.5 text-muted-foreground" aria-hidden />
-          <Input placeholder="Search loaded teachers…" value={search} onChange={(event) => setSearch(event.target.value)} className="pl-8" aria-label="Search teachers" />
+          <Input placeholder={t("teachers.searchPlaceholder")} value={search} onChange={(event) => setSearch(event.target.value)} className="pl-8" aria-label={t("teachers.searchAria")} />
         </div>
         <select
           value={deptFilter}
           onChange={(event) => setDeptFilter(event.target.value)}
           className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
-          aria-label="Filter by department"
+          aria-label={t("teachers.filterAria")}
         >
-          <option value="ALL">All Departments</option>
+          <option value="ALL">{t("teachers.filterAll")}</option>
           {departments.map((department) => (
             <option key={department.id} value={department.id}>{department.name}</option>
           ))}
@@ -285,7 +287,7 @@ export function TeachersClient({ initialData, departments = [], initialError = "
           {[0, 1, 2].map((item) => <Skeleton key={item} className="h-12 w-full" />)}
         </div>
       ) : filtered.length === 0 && data.data.length === 0 ? (
-        <EmptyState title="No teachers yet" description="Add your first teacher to start managing your academic staff." action={{ label: "Add Teacher", onClick: openCreate }} />
+        <EmptyState title={t("teachers.emptyTitle")} description={t("teachers.emptyDescription")} action={{ label: t("teachers.emptyAction"), onClick: openCreate }} />
       ) : (
         <DataTable
           data={filtered}
@@ -293,26 +295,26 @@ export function TeachersClient({ initialData, departments = [], initialError = "
           getRowId={(teacher) => teacher.id}
           onRowClick={(teacher) => router.push(`/teachers/${teacher.id}`)}
           rowActions={[
-            { label: "View", icon: <Eye size={14} />, onClick: (teacher) => router.push(`/teachers/${teacher.id}`) },
-            { label: "Edit", icon: <Pencil size={14} />, onClick: openEdit },
+            { label: t("teachers.rowView"), icon: <Eye size={14} />, onClick: (teacher) => router.push(`/teachers/${teacher.id}`) },
+            { label: t("teachers.rowEdit"), icon: <Pencil size={14} />, onClick: openEdit },
             {
-              label: teacher => teacher.status === "ACTIVE" ? "Deactivate" : "Reactivate",
-              icon: (teacher) => teacher.status === "ACTIVE" ? <PowerOff size={14} /> : <Power size={14} />,
+              label: (teacher) => (teacher.status === "ACTIVE" ? t("teachers.actionDeactivate") : t("teachers.actionActivate")),
+              icon: (teacher) => (teacher.status === "ACTIVE" ? <PowerOff size={14} /> : <Power size={14} />),
               variant: "destructive",
               onClick: (teacher) => { if (!pending) setStatusTarget(teacher); },
             },
             {
-              label: "Delete",
+              label: t("teachers.rowDelete"),
               icon: <Trash2 size={14} />,
               variant: "destructive",
               onClick: (teacher) => { if (!pending && !deletePending) setDeleteTarget(teacher); },
             },
           ]}
-          emptyTitle="No teachers found"
-          emptyDescription="No teacher records match the current filters."
+          emptyTitle={t("teachers.emptyFoundTitle")}
+          emptyDescription={t("teachers.emptyFoundDescription")}
         />
       )}
-      {loading && data.data.length > 0 ? <p role="status" className="text-xs text-muted-foreground">Refreshing teachers…</p> : null}
+      {loading && data.data.length > 0 ? <p role="status" className="text-xs text-muted-foreground">{t("teachers.refreshing")}</p> : null}
 
       <TeacherFormDialog
         key={`${editingTeacher?.id ?? "new"}-${formOpen ? "open" : "closed"}`}
@@ -327,35 +329,37 @@ export function TeachersClient({ initialData, departments = [], initialError = "
       />
 
       <AlertDialog open={!!statusTarget} onOpenChange={(open) => { if (!open && !statusPending) setStatusTarget(null); }}>
-        <AlertDialogContent open={!!statusTarget} onOpenChange={(open) => { if (!open && !statusPending) setStatusTarget(null); }}>
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{statusTarget?.status === "ACTIVE" ? "Deactivate teacher?" : "Reactivate teacher?"}</AlertDialogTitle>
+            <AlertDialogTitle>{statusTarget?.status === "ACTIVE" ? t("teachers.dialogDeactivateTitle") : t("teachers.dialogReactivateTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {statusTarget ? `${fullName(statusTarget)} will be ${statusTarget.status === "ACTIVE" ? "deactivated (INACTIVE)" : "reactivated (ACTIVE)"}. Their assignments are kept, and the account can be reactivated later.` : "Update teacher status."}
+              {statusTarget
+                ? statusTarget.status === "ACTIVE"
+                  ? t("teachers.dialogDeactivateDescription", { name: fullName(statusTarget) })
+                  : t("teachers.dialogReactivateDescription", { name: fullName(statusTarget) })
+                : t("teachers.dialogStatusFallback")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setStatusTarget(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setStatusTarget(null)}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => { if (!statusPending) void handleStatusChange(); }}>
-              {statusPending ? "Updating…" : statusTarget?.status === "ACTIVE" ? "Deactivate" : "Reactivate"}
+              {statusPending ? t("teachers.actionUpdating") : statusTarget?.status === "ACTIVE" ? t("teachers.actionDeactivate") : t("teachers.actionActivate")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deletePending) setDeleteTarget(null); }}>
-        <AlertDialogContent open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deletePending) setDeleteTarget(null); }}>
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {deleteTarget ? fullName(deleteTarget) : "teacher"}?</AlertDialogTitle>
+            <AlertDialogTitle>{t("teachers.dialogDeleteTitle", { name: deleteTarget ? fullName(deleteTarget) : "" })}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the teacher and their documents. Their login is disabled but kept for
-              audit history. Teachers who still head a section, teach subjects, or have attendance or
-              invigilation records cannot be deleted — deactivate them instead.
+              {t("teachers.dialogDeleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteTarget(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeleteTarget(null)}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => { if (!deletePending) void handleDelete(); }}>
-              {deletePending ? "Deleting…" : "Delete teacher"}
+              {t(deletePending ? "teachers.actionDeleting" : "teachers.actionDeleteTeacher")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

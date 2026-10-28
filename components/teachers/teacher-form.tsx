@@ -6,13 +6,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Eye, EyeOff, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/native-select";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { FilePicker } from "@/components/ui/file-picker";
 import { isSudanesePhone, toE164Sudanese } from "@/lib/validation/phone";
 import { getNextTeacherEmployeeNumber } from "@/lib/api/teachers";
 import type { ApiDepartment } from "@/lib/api/types";
 import type { TeacherDocumentType } from "@/lib/api/storage";
+import { useI18n } from "@/lib/i18n/locale-provider";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 export type FileVal = { file: File; previewUrl?: string; path: string } | null;
 export type GenderValue = "MALE" | "FEMALE";
@@ -102,6 +106,22 @@ export function TeacherForm({
   const [showPw, setShowPw] = React.useState(false);
   const [submitError, setSubmitError] = React.useState("");
   const departmentId = form.watch("departmentId");
+  const { t } = useI18n();
+
+  const VALIDATION_MESSAGE_KEYS: Record<string, MessageKey> = {
+    "Full name is required": "teachers.validation.fullnameRequired",
+    "Phone number is required": "teachers.validation.phoneRequired",
+    "Invalid Sudanese phone — must be +249 9XXXXXXXX or 09XXXXXXXX": "teachers.validation.phoneInvalid",
+    "Invalid Sudanese phone": "teachers.validation.phoneInvalidShort",
+    "Date of birth is required": "teachers.validation.dobRequired",
+    "Date of birth must be in the past": "teachers.validation.dobPast",
+    "Password must be at least 8 characters": "teachers.validation.passwordMin",
+  };
+  function fieldError(message: string | undefined) {
+    if (!message) return null;
+    const key = VALIDATION_MESSAGE_KEYS[message];
+    return key ? t(key) : message;
+  }
 
   // The employee number is assigned server-side from a live sequence, so the
   // form can only show a preview. Out-of-order responses are discarded by
@@ -149,7 +169,7 @@ export function TeacherForm({
         files,
       );
     } catch (cause) {
-      setSubmitError(cause instanceof Error ? cause.message : "Unable to save teacher");
+      setSubmitError(cause instanceof Error ? cause.message : t("teachers.errorSaveFailed"));
     }
   });
 
@@ -165,8 +185,8 @@ export function TeacherForm({
       {/* Personal Information */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Personal Information</CardTitle>
-          <CardDescription>Teacher personal details</CardDescription>
+          <CardTitle className="text-base">{t("teachers.cardPersonal")}</CardTitle>
+          <CardDescription>{t("teachers.cardPersonalDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -182,45 +202,45 @@ export function TeacherForm({
                 )}
               </div>
               <div className="flex-1 space-y-1.5">
-                <Label>Profile Image</Label>
+                <Label>{t("teachers.labelProfileImage")}</Label>
                 <FilePicker
                   id="teacher-profile"
-                  label="Profile image"
+                  label={t("teachers.labelProfileImage")}
                   accept="image/jpeg,image/png"
                   maxSizeMB={5}
                   value={form.watch("profileImage")}
                   onChange={(value) => form.setValue("profileImage", value, { shouldValidate: true })}
-                  helperText="JPG / PNG, max 5MB"
+                  helperText={t("teachers.helperImage")}
                 />
                 {error?.profileImage && <p className="text-xs text-destructive">{error.profileImage}</p>}
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="fullname">Full Name *</Label>
+              <Label htmlFor="fullname">{t("teachers.labelFullName")}</Label>
               <Input id="fullname" placeholder="Ahmed Ali" {...form.register("fullname")} aria-invalid={!!form.formState.errors.fullname} />
-              {form.formState.errors.fullname ? <p className="text-xs text-destructive">{String(form.formState.errors.fullname.message)}</p> : null}
+              {form.formState.errors.fullname ? <p className="text-xs text-destructive">{fieldError(form.formState.errors.fullname?.message)}</p> : null}
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="phone">Phone *</Label>
+              <Label htmlFor="phone">{t("teachers.labelPhone")}</Label>
               <Input id="phone" type="tel" inputMode="tel" placeholder="+249 91 234 5678" {...form.register("phone")} aria-invalid={!!form.formState.errors.phone} />
-              {form.formState.errors.phone ? <p className="text-xs text-destructive">{String(form.formState.errors.phone.message)}</p> : <p className="text-xs text-muted-foreground">Sudanese mobile: +249 9XXXXXXXX or 09XXXXXXXX</p>}
+              {form.formState.errors.phone ? <p className="text-xs text-destructive">{fieldError(form.formState.errors.phone?.message)}</p> : <p className="text-xs text-muted-foreground">{t("teachers.helperPhone")}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="gender">Gender *</Label>
+              <Label htmlFor="gender">{t("teachers.labelGender")}</Label>
               <Select id="gender" value={form.watch("gender")} onChange={(event) => form.setValue("gender", event.target.value as GenderValue, { shouldValidate: true })}>
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
+                <option value="MALE">{t("teachers.genderMale")}</option>
+                <option value="FEMALE">{t("teachers.genderFemale")}</option>
               </Select>
-              {form.formState.errors.gender ? <p className="text-xs text-destructive">{String(form.formState.errors.gender.message)}</p> : null}
+              {form.formState.errors.gender ? <p className="text-xs text-destructive">{fieldError(form.formState.errors.gender?.message)}</p> : null}
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="dob">Date of Birth *</Label>
+              <Label htmlFor="dob">{t("teachers.labelDob")}</Label>
               <Input id="dob" type="date" max={new Date().toISOString().slice(0, 10)} {...form.register("dateOfBirth")} aria-invalid={!!form.formState.errors.dateOfBirth} />
-              {form.formState.errors.dateOfBirth ? <p className="text-xs text-destructive">{String(form.formState.errors.dateOfBirth.message)}</p> : null}
+              {form.formState.errors.dateOfBirth ? <p className="text-xs text-destructive">{fieldError(form.formState.errors.dateOfBirth?.message)}</p> : null}
             </div>
           </div>
         </CardContent>
@@ -229,26 +249,26 @@ export function TeacherForm({
       {/* Academic Information */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Academic Information</CardTitle>
-          <CardDescription>Department assignment</CardDescription>
+          <CardTitle className="text-base">{t("teachers.cardAcademic")}</CardTitle>
+          <CardDescription>{t("teachers.cardAcademicDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-1.5">
-            <Label htmlFor="department">Department</Label>
+            <Label htmlFor="department">{t("teachers.labelDepartment")}</Label>
             <Select id="department" value={form.watch("departmentId")} onChange={(event) => form.setValue("departmentId", event.target.value, { shouldValidate: true })}>
-              <option value="">Unassigned</option>
+              <option value="">{t("teachers.deptUnassigned")}</option>
               {departments.map((department) => (
                 <option key={department.id} value={department.id}>
                   {department.name}
                 </option>
               ))}
             </Select>
-            <p className="text-xs text-muted-foreground">Departments are not active yet — leave unassigned for now.</p>
+            <p className="text-xs text-muted-foreground">{t("teachers.noteDepartments")}</p>
           </div>
 
           {!isEdit ? (
             <div className="space-y-1.5 border-t pt-3">
-              <Label htmlFor="employee-number">Employee ID</Label>
+              <Label htmlFor="employee-number">{t("teachers.labelEmployeeId")}</Label>
               <Input
                 id="employee-number"
                 readOnly
@@ -256,19 +276,19 @@ export function TeacherForm({
                 tabIndex={-1}
                 value={
                   numberState === "loading"
-                    ? "Generating…"
+                    ? t("teachers.employeeGenerating")
                     : numberState === "error"
                       ? ""
                       : nextNumber
                 }
-                placeholder={numberState === "error" ? "Assigned automatically on save" : nextNumber}
+                placeholder={numberState === "error" ? t("teachers.employeePlaceholderAssigned") : nextNumber}
                 aria-describedby="employee-number-help"
                 className="font-mono bg-muted/40"
               />
               <p id="employee-number-help" className="text-xs text-muted-foreground">
                 {numberState === "error"
-                  ? "Preview unavailable — the ID is still assigned automatically when you save."
-                  : "Read-only. Built from the year, the school code, the department's first letter and a running number. Preview only — the final ID is assigned on save."}
+                  ? t("teachers.employeeError")
+                  : t("teachers.employeeHelp")}
               </p>
             </div>
           ) : null}
@@ -278,37 +298,36 @@ export function TeacherForm({
       {/* Account */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{isEdit ? "Change Password" : "Account"}</CardTitle>
-          <CardDescription>{isEdit ? "Leave blank to keep the current password." : "Set the initial login password — hashed server-side."}</CardDescription>
+          <CardTitle className="text-base">{isEdit ? t("teachers.cardChangePassword") : t("teachers.cardAccount")}</CardTitle>
+          <CardDescription>{isEdit ? t("teachers.cardChangePasswordDesc") : t("teachers.cardAccountDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-1.5">
-          <Label htmlFor="password">{isEdit ? "New Password" : "Password *"}</Label>
+          <Label htmlFor="password">{isEdit ? t("teachers.labelNewPassword") : t("teachers.labelPassword")}</Label>
           <div className="relative">
-            <Input id="password" type={showPw ? "text" : "password"} placeholder={isEdit ? "Leave blank to keep" : "Min 8 characters"} autoComplete="new-password" {...form.register("password")} className="pr-10" aria-invalid={!!form.formState.errors.password} />
-            <button type="button" aria-label={showPw ? "Hide password" : "Show password"} onClick={() => setShowPw((value) => !value)} className="absolute right-2 top-2 size-6 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground">
+            <Input id="password" type={showPw ? "text" : "password"} placeholder={isEdit ? t("teachers.phPasswordKeep") : t("teachers.phPasswordMin")} autoComplete="new-password" {...form.register("password")} className="pr-10" aria-invalid={!!form.formState.errors.password} />
+            <button type="button" aria-label={showPw ? t("teachers.ariaHidePassword") : t("teachers.ariaShowPassword")} onClick={() => setShowPw((value) => !value)} className="absolute right-2 top-2 size-6 inline-flex items-center justify-center rounded text-muted-foreground hover:text-foreground">
               {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {form.formState.errors.password ? <p className="text-xs text-destructive">{String(form.formState.errors.password.message)}</p> : null}
-          {!isEdit ? <p className="text-xs text-muted-foreground">Min 8 characters, never shown or stored in plaintext.</p> : null}
+          {form.formState.errors.password ? <p className="text-xs text-destructive">{fieldError(form.formState.errors.password?.message)}</p> : null}
+          {!isEdit ? <p className="text-xs text-muted-foreground">{t("teachers.notePassword")}</p> : null}
         </CardContent>
       </Card>
 
       {/* Identification documents are managed on the teacher record, not here,
           so that any number of named documents can be added over time. */}
       <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-        ID documents are added from the teacher&apos;s own page after saving, where each one is shown as its
-        own card.
+        {t("teachers.noteIdDocuments")}
       </div>
 
       <div className="flex justify-end gap-2">
         {onCancel ? (
-          <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
-            Cancel
-          </Button>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
+              {t("common.cancel")}
+            </Button>
         ) : null}
         <Button type="submit" disabled={pending || form.formState.isSubmitting}>
-          {pending ? "Saving…" : isEdit ? "Save changes" : "Create teacher"}
+          {pending ? t("common.saving") : isEdit ? t("teachers.btnSaveChanges") : t("teachers.btnCreateTeacher")}
         </Button>
       </div>
     </form>

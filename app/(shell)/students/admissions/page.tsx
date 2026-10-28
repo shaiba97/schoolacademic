@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { Stepper } from "@/components/ui/stepper";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/native-select";
 import { AdmissionPersonalStep, emptyPersonalForm, validatePersonalForm, type PersonalForm } from "@/components/students/admission-personal-step";
 import { FilePicker } from "@/components/ui/file-picker";
 import { useRouter } from "next/navigation";

@@ -392,7 +392,7 @@ function GradeClassFormDialog({
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent open={open} onOpenChange={onOpenChange} side="bottom">
+        <SheetContent side="bottom">
           <SheetHeader>
             <SheetTitle>{isEdit ? "Edit Class" : "Add Class"}</SheetTitle>
             <SheetDescription>{isEdit ? "Update class details" : "Create a new class"}</SheetDescription>
@@ -405,7 +405,7 @@ function GradeClassFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent open={open} onOpenChange={onOpenChange} className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Class" : "Add Class"}</DialogTitle>
           <DialogDescription>{isEdit ? "Update class details" : "Create a new class"}</DialogDescription>

@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { Stepper } from "@/components/ui/stepper";
-import { Label, Select } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/native-select";
 import {
   AdmissionPersonalStep,
   emptyPersonalForm,
@@ -27,6 +28,7 @@ import type {
 import { EducationLevel, GRADE_BY_LEVEL, type Grade } from "@/lib/admission";
 import { studentFullName } from "@/lib/api/mappers";
 import { academicErrorMessage } from "@/components/academics/academic-utils";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 const GRADE_NAMES: Record<Grade, string> = {
   1: "FIRST",
@@ -59,7 +61,35 @@ export function AdmissionEditClient({
   initialGuardians: ApiStudentGuardianLink[];
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [active, setActive] = React.useState(0);
+
+  function levelLabel(level: EducationLevel) {
+    return level === EducationLevel.SECONDARY
+      ? t("students.levelSecondary")
+      : t("students.levelIntermediate");
+  }
+
+  function trackLabel(value: string) {
+    return value === "SCIENCE" ? t("students.trackScience") : t("students.trackArt");
+  }
+
+  function fieldLabel(value: string) {
+    switch (value) {
+      case "COMPUTER":
+        return t("students.fieldComputer");
+      case "BIOLOGY":
+        return t("students.fieldBiology");
+      case "ENGINEERING":
+        return t("students.fieldEngineering");
+      case "MILITARY_SCIENCES":
+        return t("students.fieldMilitarySciences");
+      case "ISLAMIC_STUDIES":
+        return t("students.fieldIslamicStudies");
+      default:
+        return value;
+    }
+  }
 
   const [personal, setPersonal] = React.useState<PersonalForm>(() => ({
     ...emptyPersonalForm,
@@ -109,7 +139,7 @@ export function AdmissionEditClient({
         }
       })
       .catch((cause) => {
-        if (!cancelled) setReferenceError(academicErrorMessage(cause, "Unable to load reference data"));
+        if (!cancelled) setReferenceError(academicErrorMessage(cause, t("students.validation.refDataFailed")));
       });
     return () => {
       cancelled = true;
@@ -160,15 +190,17 @@ export function AdmissionEditClient({
       : [];
 
   function enrollmentValidate(): true | string {
-    if (!GRADE_BY_LEVEL[educationLevel].includes(grade)) return "Grade does not match the education level";
-    if (trackRequired && !track) return "Track required for Second/Third Secondary";
-    if (!academicYearId) return "Pick an academic year";
+    if (!GRADE_BY_LEVEL[educationLevel].includes(grade)) return t("students.validation.gradeLevelMismatch");
+    if (trackRequired && !track) return t("students.validation.trackRequired");
+    if (!academicYearId) return t("students.validation.pickYear");
     if (!classId) {
-      return matchingClasses.length === 0 ? "No classes match this level, grade and track yet" : "Pick a class";
+      return matchingClasses.length === 0 ? t("students.validation.noClasses") : t("students.validation.pickClass");
     }
     if (fieldRequired) {
-      if (!field) return "Field of study required for 3rd grade Secondary";
-      if (!fieldOptions.includes(field)) return `Field must be one of ${fieldOptions.join(", ")}`;
+      if (!field) return t("students.validation.fieldRequired");
+      if (!fieldOptions.includes(field)) {
+        return t("students.validation.fieldOptions", { options: fieldOptions.map((option) => fieldLabel(option)).join(", ") });
+      }
     }
     return true;
   }
@@ -176,29 +208,33 @@ export function AdmissionEditClient({
   const steps = [
     {
       id: "personal",
-      label: "Personal",
-      description: "Personal information (account password and documents are managed separately).",
+      label: t("students.stepPersonal"),
+      description: t("students.stepPersonalDesc"),
       validate: () => validatePersonalForm(personal, true),
     },
     {
       id: "guardians",
-      label: "Guardians",
-      description: "Guardians save immediately as you edit them.",
+      label: t("students.stepGuardians"),
+      description: t("students.stepGuardiansDesc"),
     },
     {
       id: "enrollment",
-      label: "Enrollment",
-      description: "Level, grade and class. Changing class transfers; changing year enrolls anew.",
+      label: t("students.stepEnrollment"),
+      description: t("students.stepEnrollmentDesc"),
       validate: enrollmentValidate,
     },
-    { id: "review", label: "Review", description: "Confirm before saving changes" },
+    {
+      id: "review",
+      label: t("students.stepReview"),
+      description: t("students.stepReviewDesc"),
+    },
   ];
 
   async function submit() {
     if (submitting) return;
     const personalValidation = validatePersonalForm(personal, true);
     if (personalValidation !== true) {
-      setSubmitError(typeof personalValidation === "string" ? personalValidation : "Complete all required personal fields");
+      setSubmitError(typeof personalValidation === "string" ? personalValidation : t("students.validation.completePersonal"));
       return;
     }
     // Enrollment ops run only when enrollment actually changed. Reference data
@@ -207,7 +243,7 @@ export function AdmissionEditClient({
     const enrollmentDirty =
       classId !== original.classId || academicYearId !== original.academicYearId;
     if (enrollmentDirty && !referenceData) {
-      setSubmitError("Reference data failed to load — reload the page before changing enrollment");
+      setSubmitError(t("students.validation.refDataFailed"));
       return;
     }
     if (enrollmentDirty) {
@@ -249,7 +285,7 @@ export function AdmissionEditClient({
       }
       router.push(`/students/all/${student.id}`);
     } catch (cause) {
-      setSubmitError(academicErrorMessage(cause, "Unable to save changes"));
+      setSubmitError(academicErrorMessage(cause, t("students.errorSaveFailed")));
     } finally {
       setSubmitting(false);
     }
@@ -258,18 +294,20 @@ export function AdmissionEditClient({
   return (
     <div className="space-y-4">
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground" aria-label="Breadcrumb">
-        <Link href="/students/all" className="hover:text-foreground">Students</Link>
-        <ChevronRight size={14} />
+        <Link href="/students/all" className="hover:text-foreground">{t("students.title")}</Link>
+        <ChevronRight size={14} className="rtl:rotate-180" />
         <Link href={`/students/all/${student.id}`} className="hover:text-foreground truncate">
           {studentFullName(student)}
         </Link>
-        <ChevronRight size={14} />
-        <span className="text-foreground font-medium">Edit</span>
+        <ChevronRight size={14} className="rtl:rotate-180" />
+        <span className="text-foreground font-medium">{t("students.pageEdit")}</span>
       </nav>
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Edit {studentFullName(student)}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">
+          {t("students.pageEditTitle", { name: studentFullName(student) })}
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Same wizard, pre-filled. Guardians save immediately; personal and enrollment changes save on review.
+          {t("students.editSubtitle")}
         </p>
       </div>
 
@@ -285,7 +323,7 @@ export function AdmissionEditClient({
       ) : null}
       {submitting ? (
         <div role="status" className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
-          Saving changes…
+          {t("students.savingChanges")}
         </div>
       ) : null}
 
@@ -296,7 +334,7 @@ export function AdmissionEditClient({
               <>
                 <AdmissionPersonalStep values={personal} onChange={setPersonal} editMode />
                 <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground mt-4">
-                  Account password never changes here. Existing documents stay attached — see the Documents tab.
+                  {t("students.editAccountNote")}
                 </div>
               </>
             ) : null}
@@ -304,15 +342,15 @@ export function AdmissionEditClient({
             {idx === 2 ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-level">Education level *</Label>
+                  <Label htmlFor="edit-level">{t("students.labelLevel")}</Label>
                   <Select id="edit-level" value={educationLevel} onChange={(event) => setLevel(event.target.value as EducationLevel)}>
                     {Object.values(EducationLevel).map((v) => (
-                      <option key={v} value={v}>{v}</option>
+                      <option key={v} value={v}>{levelLabel(v)}</option>
                     ))}
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-grade">Grade *</Label>
+                  <Label htmlFor="edit-grade">{t("students.labelGrade")}</Label>
                   <Select id="edit-grade" value={String(grade)} onChange={(event) => setGrade(Number(event.target.value) as Grade)}>
                     {GRADE_BY_LEVEL[educationLevel].map((n) => (
                       <option key={n} value={String(n)}>{n}</option>
@@ -321,29 +359,31 @@ export function AdmissionEditClient({
                 </div>
                 {trackRequired ? (
                   <div className="space-y-1.5">
-                    <Label htmlFor="edit-track">Track *</Label>
+                    <Label htmlFor="edit-track">{t("students.labelTrack")}</Label>
                     <Select id="edit-track" value={track ?? ""} onChange={(event) => setTrack(event.target.value || null)}>
-                      <option value="">Select track</option>
-                      <option value="ART">ART</option>
-                      <option value="SCIENCE">SCIENCE</option>
+                      <option value="">{t("students.trackSelectPlaceholder")}</option>
+                      <option value="ART">{t("students.trackArt")}</option>
+                      <option value="SCIENCE">{t("students.trackScience")}</option>
                     </Select>
                   </div>
                 ) : null}
                 {fieldRequired ? (
                   <div className="space-y-1.5">
-                    <Label htmlFor="edit-field">Field of study *</Label>
+                    <Label htmlFor="edit-field">{t("students.labelField")}</Label>
                     <Select id="edit-field" value={field} onChange={(event) => setField(event.target.value)}>
-                      <option value="">{track ? "Select field" : "Select a track first"}</option>
+                      <option value="">
+                        {track ? t("students.fieldSelectPlaceholder") : t("students.trackFirstPlaceholder")}
+                      </option>
                       {fieldOptions.map((option) => (
                         <option key={option} value={option}>
-                          {option.split("_").map((part) => part.charAt(0) + part.slice(1).toLowerCase()).join(" ")}
+                          {fieldLabel(option)}
                         </option>
                       ))}
                     </Select>
                   </div>
                 ) : null}
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-year">Academic year *</Label>
+                  <Label htmlFor="edit-year">{t("students.labelYear")}</Label>
                   <Select id="edit-year" value={academicYearId} onChange={(event) => setAcademicYearId(event.target.value)}>
                     {(referenceData?.years ?? []).map((y) => (
                       <option key={y.id} value={y.id}>{y.name}</option>
@@ -351,7 +391,7 @@ export function AdmissionEditClient({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-class">Class *</Label>
+                  <Label htmlFor="edit-class">{t("students.labelClass")}</Label>
                   <Select
                     id="edit-class"
                     value={classId}
@@ -361,20 +401,30 @@ export function AdmissionEditClient({
                       <option key={c.id} value={c.id}>{c.className}</option>
                     ))}
                   </Select>
-                  {matchingClasses.length === 0 ? <p className="text-xs text-destructive">No classes match this level, grade{trackRequired ? " and track" : ""} yet.</p> : null}
+                  {matchingClasses.length === 0 ? (
+                    <p className="text-xs text-destructive">
+                      {trackRequired ? t("students.noClassesMatchTrack") : t("students.noClassesMatch")}
+                    </p>
+                  ) : null}
                 </div>
                 <p className="sm:col-span-2 text-xs text-muted-foreground">
-                  Role number <span className="font-mono">{student.roleNumber}</span> never changes on edit.
-                  Changing class transfers the student; changing year enrolls them anew.
+                  {t("students.roleNumberNote", { number: student.roleNumber })}
                 </p>
               </div>
             ) : null}
             {idx === 3 ? (
               <div className="rounded-lg border bg-muted/20 p-4 text-sm space-y-2">
-                <p><span className="text-muted-foreground">Student:</span> {personal.fullname.trim() || "—"}</p>
-                <p><span className="text-muted-foreground">Level / Grade:</span> {educationLevel} · Grade {grade}{trackRequired && track ? ` (${track})` : ""}</p>
-                <p><span className="text-muted-foreground">Role number:</span> <span className="font-mono text-xs">{student.roleNumber}</span> (unchanged)</p>
-                <p className="text-xs text-muted-foreground">Guardians saved inline as edited. Submitting saves personal and enrollment changes.</p>
+                <p><span className="text-muted-foreground">{t("students.reviewStudent")}</span> {personal.fullname.trim() || "—"}</p>
+                <p>
+                  <span className="text-muted-foreground">{t("students.reviewLevelGrade")}</span>{" "}
+                  {levelLabel(educationLevel)} · {t("students.gradeLabel", { g: grade })}
+                  {trackRequired && track ? ` (${trackLabel(track)})` : ""}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">{t("students.reviewRoleNumber")}</span>{" "}
+                  <span className="font-mono text-xs">{student.roleNumber}</span> {t("students.reviewRoleUnchanged")}
+                </p>
+                <p className="text-xs text-muted-foreground">{t("students.reviewNote")}</p>
               </div>
             ) : null}
           </>

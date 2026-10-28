@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Label, Select } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/native-select";
 import { saveTimetableBatch } from "@/lib/api/timetable";
 import { TIMETABLE_TYPES } from "@/lib/api/types";
 import type { ApiClassSubject, ApiSchoolClass, ApiSubject, ApiTeacher, ApiTimetableEntry, SaveTimetableBatchPayload } from "@/lib/api/types";

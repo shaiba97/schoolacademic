@@ -3,7 +3,8 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label, Select } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listClasses } from "@/lib/api/classes";
 import type { ApiSchoolClass, ApiSubject } from "@/lib/api/types";
@@ -92,7 +93,7 @@ export function SubjectGradeAssignDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!pending) onOpenChange(o); }}>
-      <DialogContent open={open} onOpenChange={(o) => { if (!pending) onOpenChange(o); }} className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>Assign {activeSubject?.name ?? "subject"} to a grade</DialogTitle>
           <DialogDescription>

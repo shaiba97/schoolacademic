@@ -65,7 +65,8 @@ export function AnalyticsClient() {
     }
   }
 
-  const examName = exams.find((e) => e.id === examId)?.name ?? "";
+  const examFromList = exams.find((e) => e.id === examId);
+  const examName = examFromList?.name ?? report?.examId ? "" : "";
 
   const chartData = React.useMemo(
     () =>

@@ -31,9 +31,9 @@ import type { ApiEnrollmentRecord, ApiExam, ApiExamSubject } from "@/lib/api/typ
 import { academicErrorMessage } from "@/components/academics/academic-utils";
 
 function subjectLabel(s: ApiExamSubject): string {
+  const subjectName = s.classSubject?.subject?.name ?? "Subject";
   const className = s.classSubject?.schoolClass?.className;
-  const name = s.classSubject?.subject?.name ?? "Subject";
-  return className ? `${name} · ${className}` : name;
+  return className ? `${subjectName} · ${className}` : subjectName;
 }
 
 type MarkRow = {
@@ -219,17 +219,22 @@ export function MarksResultsClient() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <span className="text-sm font-medium">Exam</span>
-            <Select value={examId} onValueChange={(v) => void handleExamChange(v)}>
-              <SelectTrigger><SelectValue placeholder="Select an exam…" /></SelectTrigger>
-              <SelectContent>
-                {exams.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+<div className="space-y-2">
+              <span className="text-sm font-medium">Exam</span>
+              <Select value={examId} onValueChange={(v) => void handleExamChange(v)}>
+                <SelectTrigger><SelectValue placeholder="Select an exam…" /></SelectTrigger>
+                <SelectContent>
+                  {exams.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {examId && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selected: {exams.find((e) => e.id === examId)?.name ?? "—"}
+                </p>
+              )}
+            </div>
           <div className="space-y-2">
             <span className="text-sm font-medium">Subject</span>
             {!exam || examLoading ? (

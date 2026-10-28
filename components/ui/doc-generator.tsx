@@ -3,7 +3,8 @@
 import * as React from "react";
 import { Eye, Download, FileText, Award } from "lucide-react";
 import { Button } from "./button";
-import { Select, Label } from "./input";
+import { Label } from "./label";
+import { Select } from "./native-select";
 import { Badge } from "./badge";
 import { cn } from "@/lib/utils";
 

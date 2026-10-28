@@ -8,12 +8,9 @@ export interface StaffProfileTenant {
 
 export interface StaffProfile {
   id: string;
-  firstName: string;
-  lastName: string;
   fullName: string;
   staffNumber: string | null;
   phone: string | null;
-  email: string | null;
   avatarUrl: string | null;
   status: string;
   position: string;
@@ -30,9 +27,8 @@ export interface AuthMeResponse {
   accessToken: string;
   user: {
     id: string;
-    firstName: string;
-    lastName: string | null;
-    email: string | null;
+    fullName: string | null;
+    email?: string | null;
     avatarUrl: string | null;
     status: string;
   };
@@ -43,8 +39,7 @@ export interface AuthMeResponse {
  * does not echo the phone, so the caller re-reads the profile to see it.
  */
 export function updateOwnDetails(input: {
-  firstName: string;
-  lastName?: string;
+  fullName: string;
   phone?: string | null;
 }) {
   return academicApiFetch<AuthMeResponse>("/auth/me", {

@@ -1,6 +1,8 @@
 "use client";
 
-import { Input, Label, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/native-select";
 import { TIMETABLE_TYPES, type TimetableTypeId } from "@/lib/api/types";
 
 export type TimetableScope = {

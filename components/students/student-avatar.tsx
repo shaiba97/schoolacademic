@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { fetchFileBlob } from "@/lib/api/storage";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 export type AvatarStudent = {
   id: string;
@@ -35,6 +36,7 @@ export function StudentAvatar({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
+  const { t } = useI18n();
   const [photoUrl, setPhotoUrl] = React.useState<string | null>(null);
   const [photoBroken, setPhotoBroken] = React.useState(false);
 
@@ -61,7 +63,7 @@ export function StudentAvatar({
 
   const dims =
     size === "lg" ? "size-20 text-2xl" : size === "sm" ? "size-8 text-sm" : "size-10 text-base";
-  const name = displayName(student) || "Unnamed student";
+  const name = displayName(student) || t("students.avatarUnnamed");
   const initial = (student.firstName?.[0] ?? "?").toUpperCase();
 
   if (photoUrl && !photoBroken) {
@@ -82,7 +84,7 @@ export function StudentAvatar({
   return (
     <span
       role="img"
-      aria-label={`${name} (no photo)`}
+      aria-label={t("students.avatarAriaNoPhoto", { name })}
       className={cn(
         "inline-flex items-center justify-center rounded-full font-semibold shrink-0",
         dims,

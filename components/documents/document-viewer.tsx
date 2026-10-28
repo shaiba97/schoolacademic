@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { downloadFile, fetchFileBlob } from "@/lib/api/storage";
 import { academicErrorMessage } from "@/components/academics/academic-utils";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/locale-provider";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 export type ViewableDocument = {
   objectKey: string;
@@ -36,7 +38,7 @@ async function sniffDocumentKind(blob: Blob): Promise<DocumentKind> {
   return "unknown";
 }
 
-function useDocumentBlob(document: ViewableDocument | null | undefined, reloadToken = 0) {
+function useDocumentBlob(document: ViewableDocument | null | undefined, reloadToken = 0, t?: (key: MessageKey) => string) {
   const [loaded, setLoaded] = React.useState<{
     objectKey: string;
     url: string;
@@ -70,16 +72,16 @@ function useDocumentBlob(document: ViewableDocument | null | undefined, reloadTo
           declaredType,
         });
       })
-      .catch((cause) => {
-        if (!active) return;
-        const timedOut = cause instanceof DOMException && cause.name === "AbortError";
-        setFailure({
-          objectKey,
-          message: timedOut
-            ? `Timed out after ${LOAD_TIMEOUT_MS / 1000}s while loading this document. The file may not be readable on the server — try Download or re-upload it.`
-            : academicErrorMessage(cause, "Unable to load document"),
-        });
-      })
+          .catch((cause) => {
+            if (!active) return;
+            const timedOut = cause instanceof DOMException && cause.name === "AbortError";
+            setFailure({
+              objectKey,
+              message: timedOut
+                ? `Timed out after ${LOAD_TIMEOUT_MS / 1000}s while loading this document. The file may not be readable on the server — try Download or re-upload it.`
+                : academicErrorMessage(cause, t?.("documents.viewer.loadFailed") ?? "Unable to load document"),
+            });
+          })
       .finally(() => clearTimeout(timer));
     return () => {
       active = false;
@@ -103,12 +105,14 @@ function DocumentFrame({
   kind,
   name,
   compact,
+  t,
 }: {
   url: string;
   isImage: boolean;
   kind: DocumentKind;
   name: string;
   compact?: boolean;
+  t: (key: MessageKey) => string;
 }) {
   const [brokenUrl, setBrokenUrl] = React.useState<string | null>(null);
   const broken = brokenUrl === url;
@@ -118,7 +122,7 @@ function DocumentFrame({
       <div className="flex justify-center overflow-auto rounded-lg border bg-muted/30 p-2">
         {broken ? (
           <p className="flex min-h-32 w-full items-center justify-center px-4 text-center text-sm text-destructive">
-            This image could not be displayed. Use Download to open the original file.
+            {t("documents.viewer.imageBroken")}
           </p>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
@@ -146,8 +150,8 @@ function DocumentFrame({
       </div>
       <p className="text-xs text-muted-foreground">
         {kind === "unknown"
-          ? "File type could not be identified — if nothing appears below, use Download."
-          : "If nothing appears above, use Download to open the original file."}
+          ? t("documents.viewer.typeUnknown")
+          : t("documents.viewer.typeFallback")}
       </p>
     </div>
   );
@@ -169,8 +173,9 @@ export function DocumentViewer({
   const [open, setOpen] = React.useState(false);
   const [actionError, setActionError] = React.useState("");
   const [reloadToken, setReloadToken] = React.useState(0);
-  const { state, error, loading } = useDocumentBlob(document, reloadToken);
-  const name = document?.originalName || document?.objectKey?.split("/").pop() || "Document";
+  const { t } = useI18n();
+  const { state, error, loading } = useDocumentBlob(document, reloadToken, t);
+  const name = document?.originalName || document?.objectKey?.split("/").pop() || t("documents.viewer.documentFallback");
   const message = actionError || error;
   const unrecognised = Boolean(state) && state?.kind === "unknown";
 
@@ -199,7 +204,7 @@ export function DocumentViewer({
               setReloadToken((token) => token + 1);
             }}
           >
-            Retry
+            {t("common.retry")}
           </Button>
         </div>
       ) : null}
@@ -212,16 +217,20 @@ export function DocumentViewer({
           kind={state.kind}
           name={name}
           compact
+          t={t}
         />
       ) : (
         <div className="flex h-24 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-          {loading ? "Loading document…" : "Preview unavailable"}
+          {loading ? t("documents.viewer.loading") : t("documents.viewer.previewUnavailable")}
         </div>
       )}
 
       {state && (unrecognised || state.declaredType === "unknown" || state.declaredType === "application/octet-stream") ? (
         <p className="text-xs text-muted-foreground">
-          Detected {state.kind === "unknown" ? "unrecognised file type" : state.kind} · {formatBytes(state.size)}
+          {t("documents.viewer.detected", {
+            kind: state.kind === "unknown" ? t("documents.viewer.kindUnknown") : state.kind === "image" ? t("documents.viewer.kindImage") : t("documents.viewer.kindPdf"),
+            size: formatBytes(state.size),
+          })}
         </p>
       ) : null}
 
@@ -238,13 +247,13 @@ export function DocumentViewer({
             }
           }}
         >
-          <Eye size={14} aria-hidden /> {state ? "View" : "Load"}
+          <Eye size={14} aria-hidden /> {state ? t("documents.viewer.view") : t("documents.viewer.load")}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => window.print()}>
-          <Printer size={14} aria-hidden /> Print
+          <Printer size={14} aria-hidden /> {t("documents.viewer.print")}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => void handleDownload()}>
-          <Download size={14} aria-hidden /> Download
+          <Download size={14} aria-hidden /> {t("documents.viewer.download")}
         </Button>
         <span className="min-w-0 truncate text-xs text-muted-foreground">{name}</span>
       </div>
@@ -255,17 +264,17 @@ export function DocumentViewer({
             <DialogTitle>{name}</DialogTitle>
           </DialogHeader>
           {state ? (
-            <DocumentFrame key={document?.objectKey} url={state.url} isImage={state.isImage} kind={state.kind} name={name} />
+            <DocumentFrame key={document?.objectKey} url={state.url} isImage={state.isImage} kind={state.kind} name={name} t={t} />
           ) : null}
           <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Close
+              {t("common.close")}
             </Button>
             <Button type="button" variant="outline" onClick={() => window.print()}>
-              <Printer size={14} aria-hidden /> Print
+              <Printer size={14} aria-hidden /> {t("documents.viewer.print")}
             </Button>
             <Button type="button" onClick={() => void handleDownload()}>
-              <Download size={14} aria-hidden /> Download
+              <Download size={14} aria-hidden /> {t("documents.viewer.download")}
             </Button>
           </DialogFooter>
         </DialogContent>

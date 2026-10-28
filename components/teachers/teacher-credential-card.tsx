@@ -18,6 +18,7 @@ import {
 import { DocumentViewer } from "@/components/documents/document-viewer";
 import { sourceLabel } from "@/components/teachers/teacher-credential-dialog";
 import type { ApiTeacherCredential } from "@/lib/api/types";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 /**
  * One document = one ID card. The card owns the document's name and origin;
@@ -36,6 +37,7 @@ export function TeacherCredentialCard({
   onDelete: (credential: ApiTeacherCredential) => void;
 }) {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const { t } = useI18n();
 
   return (
     <Card className="flex flex-col">
@@ -43,10 +45,10 @@ export function TeacherCredentialCard({
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-sm leading-snug">{credential.title}</CardTitle>
           <Badge variant={credential.source === "TEACHER" ? "info" : "muted"} className="shrink-0">
-            {credential.source === "TEACHER" ? "Teacher" : "Academic affairs"}
+            {credential.source === "TEACHER" ? t("teachers.sourceTeacher") : t("teachers.sourceAcademicAffairs")}
           </Badge>
         </div>
-        <p className="text-xs text-muted-foreground">{sourceLabel(credential.source)}</p>
+        <p className="text-xs text-muted-foreground">{sourceLabel(credential.source, t)}</p>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col gap-3">
@@ -60,7 +62,7 @@ export function TeacherCredentialCard({
             onClick={() => onEdit(credential)}
             disabled={pending}
           >
-            <Pencil size={14} aria-hidden /> Edit
+            <Pencil size={14} aria-hidden /> {t("teachers.rowEdit")}
           </Button>
           <Button
             type="button"
@@ -68,9 +70,9 @@ export function TeacherCredentialCard({
             variant="outline"
             onClick={() => setConfirmOpen(true)}
             disabled={pending}
-            aria-label={`Delete ${credential.title}`}
+            aria-label={t("teachers.ariaDeleteDoc", { title: credential.title })}
           >
-            <Trash2 size={14} aria-hidden /> Delete
+            <Trash2 size={14} aria-hidden /> {t("teachers.actionDeleteDoc")}
           </Button>
         </div>
       </CardContent>
@@ -78,20 +80,18 @@ export function TeacherCredentialCard({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete “{credential.title}”?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The document and its file are permanently removed from this teacher record. This cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("teachers.dialogDeleteDocTitle", { title: credential.title })}</AlertDialogTitle>
+            <AlertDialogDescription>{t("teachers.dialogDeleteDocDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setConfirmOpen(false);
                 onDelete(credential);
               }}
             >
-              Delete document
+              {t("teachers.actionDeleteDoc")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

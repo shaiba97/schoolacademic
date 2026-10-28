@@ -38,6 +38,7 @@ import { toTitleCase } from "@/lib/text";
 import { formatAcademicDate } from "@/components/academics/academic-utils";
 import { cn } from "@/lib/utils";
 import { studentStatusBadgeVariant, useStudentActions } from "@/components/students/use-student-actions";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 function MenuButton({
   label,
@@ -136,6 +137,7 @@ function MenuButton({
 
 export function StudentsAllClient({ initialData, initialError }: { initialData: ApiPaginated<ApiStudent>; initialError?: string }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [data, setData] = React.useState(initialData);
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
@@ -177,13 +179,23 @@ export function StudentsAllClient({ initialData, initialError }: { initialData: 
       setData(result);
       setPage(nextPage);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load students");
+      setError(cause instanceof Error ? cause.message : t("students.errorLoadFailed"));
     } finally {
       setLoading(false);
     }
   }
 
   const filtered = data.data;
+
+  const STATUS_LABELS: Record<string, string> = {
+    PENDING_ADMISSION: t("students.statusPendingAdmission"),
+    ACTIVE: t("students.statusActive"),
+    INACTIVE: t("students.statusInactive"),
+    GRADUATED: t("students.statusGraduated"),
+    WITHDRAWN: t("students.statusWithdrawn"),
+    POSTPONED: t("students.statusPostponed"),
+    FIRED: t("students.statusFired"),
+  };
 
   function classCell(student: ApiStudent) {
     const schoolClass = currentEnrollment(student)?.schoolClass;
@@ -196,58 +208,53 @@ export function StudentsAllClient({ initialData, initialError }: { initialData: 
       <span className="inline-flex items-center gap-1.5">
         <span className="text-sm">{schoolClass.className}</span>
         {showTrack ? (
-          <Badge variant="outline">{schoolClass.track === "SCIENCE" ? "Science" : "Art"}</Badge>
+          <Badge variant="outline">{schoolClass.track === "SCIENCE" ? t("students.trackScience") : t("students.trackArt")}</Badge>
         ) : null}
       </span>
     );
   }
 
   const columns: Column<ApiStudent>[] = [
-    { id: "roleNumber", header: "Roll No", accessor: (student) => <span className="font-mono text-xs tracking-wider">{student.roleNumber}</span>, sortable: true },
-    { id: "name", header: "Name", accessor: (student) => <span className="font-medium truncate min-w-0 block">{toTitleCase(studentFullName(student))}</span>, sortable: true },
+    { id: "roleNumber", header: t("students.colRollNo"), accessor: (student) => <span className="font-mono text-xs tracking-wider">{student.roleNumber}</span>, sortable: true },
+    { id: "name", header: t("students.colName"), accessor: (student) => <span className="font-medium truncate min-w-0 block">{toTitleCase(studentFullName(student))}</span>, sortable: true },
     {
       id: "level",
-      header: "Education Level",
+      header: t("students.colEducationLevel"),
       accessor: (student) => <span className="text-sm">{student.educationLevel ?? "—"}</span>,
       sortable: true,
     },
-    { id: "className", header: "Class", accessor: (student) => classCell(student) },
-    { id: "status", header: "Status", accessor: (student) => <Badge variant={studentStatusBadgeVariant(student.status)}>{student.status}</Badge>, sortable: true },
-    { id: "joined", header: "Joined", accessor: (student) => <span className="text-sm">{formatAcademicDate(student.admissionDate ?? student.createdAt)}</span>, sortable: true },
+    { id: "className", header: t("students.colClass"), accessor: (student) => classCell(student) },
+    { id: "status", header: t("students.colStatus"), accessor: (student) => <Badge variant={studentStatusBadgeVariant(student.status)}>{STATUS_LABELS[student.status]}</Badge>, sortable: true },
+    { id: "joined", header: t("students.colJoined"), accessor: (student) => <span className="text-sm">{formatAcademicDate(student.admissionDate ?? student.createdAt)}</span>, sortable: true },
     {
       id: "actions",
-      header: "Actions",
+      header: t("students.colActions"),
       accessor: (student) => (
         <span className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
           <MenuButton
-            label={`Student actions for ${studentFullName(student)}`}
+            label={t("students.ariaStudentActions", { name: studentFullName(student) })}
             icon={<UserCog size={14} />}
             items={[
-              { label: "View", icon: <Eye size={14} />, onSelect: () => router.push(`/students/all/${student.id}`) },
-              { label: "Edit", icon: <Pencil size={14} />, onSelect: () => router.push(`/students/all/${student.id}/edit`) },
+              { label: t("students.actionView"), icon: <Eye size={14} />, onSelect: () => router.push(`/students/all/${student.id}`) },
+              { label: t("students.actionEdit"), icon: <Pencil size={14} />, onSelect: () => router.push(`/students/all/${student.id}/edit`) },
               {
-                label: "Archive",
+                label: t("students.actionArchive"),
                 icon: <Archive size={14} />,
                 onSelect: () => actions.openArchive(student),
               },
               {
-                label: "Fire",
+                label: t("students.actionFire"),
                 icon: <Trash2 size={14} />,
                 destructive: true,
                 onSelect: () => actions.openStatus(student, "FIRE"),
               },
               {
-                label: "Postpone",
+                label: t("students.actionPostpone"),
                 icon: <Clock size={14} />,
                 onSelect: () => actions.openStatus(student, "POSTPONE"),
               },
               {
-                label: "Transfer",
-                icon: <TrendingUp size={14} />,
-                onSelect: () => actions.transferTo(student),
-              },
-              {
-                label: "Delete",
+                label: t("students.actionDelete"),
                 icon: <Trash2 size={14} />,
                 destructive: true,
                 onSelect: () => actions.openDelete(student),
@@ -255,12 +262,12 @@ export function StudentsAllClient({ initialData, initialError }: { initialData: 
             ]}
           />
           <MenuButton
-            label={`Admission actions for ${studentFullName(student)}`}
+            label={t("students.ariaAdmissionActions", { name: studentFullName(student) })}
             icon={<FileText size={14} />}
             items={[
-              { label: "View", icon: <Eye size={14} />, onSelect: () => actions.openAdmission(student) },
-              { label: "Print…", icon: <Printer size={14} />, onSelect: () => actions.openAdmission(student) },
-              { label: "Download…", icon: <Download size={14} />, onSelect: () => actions.openAdmission(student) },
+              { label: t("students.actionView"), icon: <Eye size={14} />, onSelect: () => actions.openAdmission(student) },
+              { label: t("students.actionPrint"), icon: <Printer size={14} />, onSelect: () => actions.openAdmission(student) },
+              { label: t("students.actionDownload"), icon: <Download size={14} />, onSelect: () => actions.openAdmission(student) },
             ]}
           />
         </span>
@@ -274,21 +281,21 @@ export function StudentsAllClient({ initialData, initialError }: { initialData: 
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3 justify-between items-center">
         <div>
-          <h1 className="text-xl font-semibold">Students</h1>
-          <p className="text-sm text-muted-foreground">Live student records from the Academic API.</p>
+          <h1 className="text-xl font-semibold">{t("students.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("students.subtitle")}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/students/admissions")}><Plus size={16} /> New Admission</Button>
+          <Button variant="outline" onClick={() => router.push("/students/admissions")}><Plus size={16} /> {t("students.newAdmission")}</Button>
         </div>
       </div>
 
       <form className="flex flex-col gap-2 sm:flex-row sm:flex-wrap" onSubmit={(event) => { event.preventDefault(); void load(1); }}>
         <div className="relative flex-1 max-w-sm">
           <Search size={16} className="absolute left-2.5 top-2.5 text-muted-foreground" aria-hidden />
-          <Input placeholder="Search name or role number" value={search} onChange={(event) => setSearch(event.target.value)} className="pl-8" aria-label="Search students" />
+          <Input placeholder={t("students.searchPlaceholder")} value={search} onChange={(event) => setSearch(event.target.value)} className="pl-8" aria-label={t("students.searchAria")} />
         </div>
-        <Button type="submit" disabled={loading}>{loading ? "Searching…" : "Search"}</Button>
-        {search ? <Button type="button" variant="ghost" onClick={() => { setSearch(""); void load(1); }}>Clear</Button> : null}
+        <Button type="submit" disabled={loading}>{loading ? t("students.searching") : t("students.searchLabel")}</Button>
+        {search ? <Button type="button" variant="ghost" onClick={() => { setSearch(""); void load(1); }}>{t("students.clear")}</Button> : null}
       </form>
 
       <div className="flex flex-wrap gap-2">
@@ -296,32 +303,32 @@ export function StudentsAllClient({ initialData, initialError }: { initialData: 
           value={levelFilter}
           onChange={(event) => { const v = event.target.value; setLevelFilter(v); void load(1, { level: v, grade: gradeFilter, status: statusFilter }); }}
           className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
-          aria-label="Filter by education level"
+          aria-label={t("students.filterLevelAria")}
         >
-          <option value="ALL">All Levels</option>
-          <option value="SECONDARY">Secondary</option>
-          <option value="INTERMEDIATE">Intermediate</option>
+          <option value="ALL">{t("students.filterAllLevels")}</option>
+          <option value="SECONDARY">{t("students.levelSecondary")}</option>
+          <option value="INTERMEDIATE">{t("students.levelIntermediate")}</option>
         </select>
         <select
           value={gradeFilter}
           onChange={(event) => { const v = event.target.value; setGradeFilter(v); void load(1, { level: levelFilter, grade: v, status: statusFilter }); }}
           className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
-          aria-label="Filter by grade"
+          aria-label={t("students.filterGradeAria")}
         >
-          <option value="ALL">All Grades</option>
+          <option value="ALL">{t("students.filterAllGrades")}</option>
           {["1", "2", "3", "6", "7", "8", "9"].map((g) => (
-            <option key={g} value={g}>Grade {g}</option>
+            <option key={g} value={g}>{t("students.gradeLabel", { g })}</option>
           ))}
         </select>
         <select
           value={statusFilter}
           onChange={(event) => { const v = event.target.value; setStatusFilter(v); void load(1, { level: levelFilter, grade: gradeFilter, status: v }); }}
           className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
-          aria-label="Filter by status"
+          aria-label={t("students.filterStatusAria")}
         >
-          <option value="ALL">All Statuses</option>
-          {["PENDING_ADMISSION", "ACTIVE", "INACTIVE", "GRADUATED", "TRANSFERRED", "WITHDRAWN", "POSTPONED", "FIRED"].map((s) => (
-            <option key={s} value={s}>{s}</option>
+          <option value="ALL">{t("students.filterAllStatuses")}</option>
+          {["PENDING_ADMISSION", "ACTIVE", "INACTIVE", "GRADUATED", "WITHDRAWN", "POSTPONED", "FIRED"].map((s) => (
+            <option key={s} value={s}>{STATUS_LABELS[s]}</option>
           ))}
         </select>
       </div>
@@ -329,23 +336,23 @@ export function StudentsAllClient({ initialData, initialError }: { initialData: 
       {error ? <div role="alert" className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">{error}</div> : null}
 
       {actions.actionPending ? (
-        <p role="status" className="text-xs text-muted-foreground">Working…</p>
+        <p role="status" className="text-xs text-muted-foreground">{t("students.working")}</p>
       ) : null}
 
-      {filtered.length === 0 && !loading ? <EmptyState title="No students found" description={search ? "Try a different search." : "Create the first student through New Admission."} action={{ label: "New Admission", onClick: () => router.push("/students/admissions") }} /> : (
+      {filtered.length === 0 && !loading ? <EmptyState title={t("students.noStudentsTitle")} description={search ? t("students.noStudentsDescription") : t("students.noStudentsDescriptionDefault")} action={{ label: t("students.newAdmission"), onClick: () => router.push("/students/admissions") }} /> : (
         <DataTable
           data={filtered}
           columns={columns}
           getRowId={(student) => student.id}
           onRowClick={(student) => router.push(`/students/all/${student.id}`)}
-          bulkActions={[{ label: "Bulk Promote", icon: <TrendingUp size={14} />, onClick: (rows) => router.push(`/promotion/promote?students=${encodeURIComponent(rows.map((row) => row.id).join(","))}`) }]}
+          bulkActions={[{ label: t("students.bulkPromote"), icon: <TrendingUp size={14} />, onClick: (rows) => router.push(`/promotion/promote?students=${encodeURIComponent(rows.map((row) => row.id).join(","))}`) }]}
           pageSize={50}
-          emptyTitle="No students"
-          emptyDescription="No student records match the current filters."
+          emptyTitle={t("students.emptyFoundTitle")}
+          emptyDescription={t("students.emptyFoundDescription")}
         />
       )}
 
-      {data.total > data.limit ? <div className="flex flex-wrap items-center justify-end gap-2 text-sm"><Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => void load(page - 1)}>Previous</Button><span>Page {page} of {totalPages}</span><Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => void load(page + 1)}>Next</Button></div> : null}
+      {data.total > data.limit ? <div className="flex flex-wrap items-center justify-end gap-2 text-sm"><Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => void load(page - 1)}>{t("students.paginationPrevious")}</Button><span>{t("students.paginationPage", { page, totalPages })}</span><Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => void load(page + 1)}>{t("students.paginationNext")}</Button></div> : null}
 
       {actions.dialogs}
     </div>

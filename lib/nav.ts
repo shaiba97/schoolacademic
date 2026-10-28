@@ -4,11 +4,13 @@ import {
   LayoutDashboard,
   Users,
   GraduationCap,
+  ClipboardCheck,
   FileText,
   TrendingUp,
   Files,
   Contact,
   Building2,
+  UserRound,
 } from "lucide-react";
 
 export type NavChild = {
@@ -39,7 +41,6 @@ export const NAV_SECTIONS: NavSection[] = [
       { labelKey: "nav.studentsAll", href: "/students/all" },
       { labelKey: "nav.studentsAdmissions", href: "/students/admissions" },
       { labelKey: "nav.studentsEnrollments", href: "/students/enrollments" },
-      { labelKey: "nav.studentsTransfers", href: "/students/transfers" },
       { labelKey: "nav.studentsGraduations", href: "/students/graduations" },
       { labelKey: "nav.studentsGuardians", href: "/students/guardians" },
     ],
@@ -55,6 +56,16 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    labelKey: "nav.exams",
+    href: "/exams",
+    icon: ClipboardCheck,
+    children: [
+      { labelKey: "nav.examsList", href: "/exams" },
+      { labelKey: "nav.examsRooms", href: "/exams/rooms" },
+      { labelKey: "nav.examsResults", href: "/exams/results" },
+    ],
+  },
+  {
     labelKey: "nav.teachers",
     href: "/teachers",
     icon: Contact,
@@ -66,29 +77,7 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: Building2,
     children: [],
   },
-  {
-    labelKey: "nav.examinations",
-    href: "/examinations",
-    icon: FileText,
-    children: [
-      { labelKey: "nav.examinationsSetup", href: "/examinations/exam-setup" },
-      { labelKey: "nav.examinationsHallTickets", href: "/examinations/hall-tickets" },
-      { labelKey: "nav.examinationsMarks", href: "/examinations/marks-results" },
-      { labelKey: "nav.examinationsRooms", href: "/examinations/rooms" },
-      { labelKey: "nav.examinationsAnalytics", href: "/examinations/analytics" },
-    ],
-  },
-  {
-    labelKey: "nav.promotion",
-    href: "/promotion",
-    icon: TrendingUp,
-    children: [
-      { labelKey: "nav.promotionPromote", href: "/promotion/promote" },
-      { labelKey: "nav.promotionRepeat", href: "/promotion/repeat" },
-      { labelKey: "nav.promotionGraduation", href: "/promotion/graduation" },
-    ],
-  },
-  {
+{
     labelKey: "nav.documents",
     href: "/documents",
     icon: Files,
@@ -96,6 +85,12 @@ export const NAV_SECTIONS: NavSection[] = [
       { labelKey: "nav.documentsCertificates", href: "/documents/certificates" },
       { labelKey: "nav.documentsAcademic", href: "/documents/academic" },
     ],
+  },
+  {
+    labelKey: "nav.profile",
+    href: "/profile",
+    icon: UserRound,
+    children: [],
   },
 ];
 

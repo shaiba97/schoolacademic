@@ -16,6 +16,7 @@ import { updateTeacher, updateTeacherStatus, fullName, profileImageDocument, dep
 import { uploadTeacherFile, deleteStagedFile } from "@/lib/api/storage";
 import { TeacherCredentials } from "@/components/teachers/teacher-credentials";
 import { academicErrorMessage, formatAcademicDate } from "@/components/academics/academic-utils";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 function statusBadge(teacher: ApiTeacher) {
   return <Badge variant={teacher.status === "ACTIVE" ? "success" : "muted"}>{teacher.status}</Badge>;
@@ -31,6 +32,7 @@ export function TeacherDetailClient({
   departmentsError?: string;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [editOpen, setEditOpen] = React.useState(false);
   const [statusOpen, setStatusOpen] = React.useState(false);
   const [pending, setPending] = React.useState(false);
@@ -78,7 +80,7 @@ export function TeacherDetailClient({
       setEditOpen(false);
     } catch (cause) {
       await Promise.all(stagedKeys.map((key) => deleteStagedFile(key).catch(() => undefined)));
-      setError(academicErrorMessage(cause, "Unable to update teacher"));
+      setError(academicErrorMessage(cause, t("teachers.errorSaveFailed")));
     } finally {
       setPending(false);
     }
@@ -108,7 +110,7 @@ export function TeacherDetailClient({
       <Card>
         <CardContent className="p-6">
           <nav className="flex items-center gap-1.5 mb-5 text-sm text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/teachers" className="hover:text-foreground">Teachers</Link>
+            <Link href="/teachers" className="hover:text-foreground">{t("teachers.title")}</Link>
             <ChevronRight size={14} aria-hidden />
             <span className="text-foreground font-medium truncate">{fullName(teacher)}</span>
           </nav>
@@ -120,16 +122,16 @@ export function TeacherDetailClient({
                 <Badge variant="outline">{deptName(teacher, departments)}</Badge>
                 {teacher.user?.phone ? <span className="inline-flex items-center gap-1"><Phone size={12} aria-hidden />{teacher.user.phone}</span> : null}
                 {statusBadge(teacher)}
-                <Badge variant="secondary">{teacher.gender}</Badge>
+                <Badge variant="secondary">{teacher.gender === "MALE" ? t("teachers.genderMale") : t("teachers.genderFemale")}</Badge>
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Employee {teacher.employeeNumber || "—"} · {teacher.status}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("teachers.lblEmployeeNo")} {teacher.employeeNumber || "—"} · {teacher.status === "ACTIVE" ? t("teachers.statusActive") : t("teachers.statusInactive")}</p>
             </div>
             <div className="flex gap-2 shrink-0">
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil size={14} /> Edit
+                <Pencil size={14} /> {t("teachers.rowEdit")}
               </Button>
               <Button variant="outline" size="sm" onClick={() => setStatusOpen(true)}>
-                {teacher.status === "ACTIVE" ? <><Power size={14} /> Deactivate</> : <><PowerOff size={14} /> Reactivate</>}
+                {teacher.status === "ACTIVE" ? <><Power size={14} /> {t("teachers.actionDeactivate")}</> : <><PowerOff size={14} /> {t("teachers.actionActivate")}</>}
               </Button>
             </div>
           </div>
@@ -139,39 +141,43 @@ export function TeacherDetailClient({
       {/* Info sections */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="text-sm">Personal Information</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{t("teachers.cardPersonal")}</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p><span className="text-muted-foreground">Full Name:</span> {fullName(teacher)}</p>
-            <p><span className="text-muted-foreground">Gender:</span> {teacher.gender}</p>
-            <p><span className="text-muted-foreground">Date of Birth:</span> {formatAcademicDate(teacher.dateOfBirth)}</p>
-            <p><span className="text-muted-foreground">Phone:</span> <span className="font-mono text-xs">{teacher.user?.phone || "—"}</span></p>
+            <p><span className="text-muted-foreground">{t("teachers.lblFullName")}</span> {fullName(teacher)}</p>
+            <p><span className="text-muted-foreground">{t("teachers.lblGender")}</span> {teacher.gender === "MALE" ? t("teachers.genderMale") : t("teachers.genderFemale")}</p>
+            <p><span className="text-muted-foreground">{t("teachers.lblDob")}</span> {formatAcademicDate(teacher.dateOfBirth)}</p>
+            <p><span className="text-muted-foreground">{t("teachers.lblPhone")}</span> <span className="font-mono text-xs">{teacher.user?.phone || "—"}</span></p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-sm">Academic Information</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{t("teachers.cardAcademic")}</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p><span className="text-muted-foreground">Department:</span> {deptName(teacher, departments)}</p>
-            <p><span className="text-muted-foreground">Employee No:</span> <span className="font-mono text-xs">{teacher.employeeNumber || "—"}</span></p>
-            <p><span className="text-muted-foreground">Status:</span> {statusBadge(teacher)}</p>
+            <p><span className="text-muted-foreground">{t("teachers.lblDepartment")}</span> {deptName(teacher, departments)}</p>
+            <p><span className="text-muted-foreground">{t("teachers.lblEmployeeNo")}</span> <span className="font-mono text-xs">{teacher.employeeNumber || "—"}</span></p>
+            <p><span className="text-muted-foreground">{t("teachers.lblStatus")}</span> {statusBadge(teacher)}</p>
           </CardContent>
         </Card>
         <TeacherCredentials teacherId={teacher.id} initialCredentials={teacher.credentials ?? []} />
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Teaching Assignments</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><CardTitle className="text-sm">{t("teachers.cardAssignments")}</CardTitle></CardHeader>
         <CardContent>
           {(teacher.classSubjects ?? []).length === 0 && (teacher.classTeacherFor ?? []).length === 0 ? (
             <EmptyState
-              title="No teaching assignments"
-              description="No subjects or class-teacher roles assigned yet."
-              action={{ label: "Manage subjects", onClick: () => router.push("/academics/subjects") }}
+              title={t("teachers.cardAssignmentsEmptyTitle")}
+              description={t("teachers.cardAssignmentsEmptyDescription")}
+              action={{ label: t("teachers.cardAssignmentsEmptyAction"), onClick: () => router.push("/academics/subjects") }}
             />
           ) : (
             <div className="space-y-3">
               <div className="flex flex-wrap gap-1.5">
-                <Badge variant="outline">{(teacher.classSubjects ?? []).length} subject{(teacher.classSubjects ?? []).length === 1 ? "" : "s"}</Badge>
-                <Badge variant="outline">{(teacher.classTeacherFor ?? []).length} class-teacher role{(teacher.classTeacherFor ?? []).length === 1 ? "" : "s"}</Badge>
+                <Badge variant="outline">
+                  {(teacher.classSubjects ?? []).length === 1 ? t("teachers.subjectOne", { count: (teacher.classSubjects ?? []).length }) : t("teachers.subjectOther", { count: (teacher.classSubjects ?? []).length })}
+                </Badge>
+                <Badge variant="outline">
+                  {(teacher.classTeacherFor ?? []).length === 1 ? t("teachers.roleOne", { count: (teacher.classTeacherFor ?? []).length }) : t("teachers.roleOther", { count: (teacher.classTeacherFor ?? []).length })}
+                </Badge>
               </div>
               {(teacher.classSubjects ?? []).length > 0 ? (
                 <div className="space-y-2">
@@ -181,9 +187,9 @@ export function TeacherDetailClient({
                         <BookOpen size={16} aria-hidden className="text-muted-foreground" />
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{assignment.subject?.name ?? "Subject"}</p>
+                        <p className="text-sm font-medium truncate">{assignment.subject?.name ?? t("teachers.fallbackSubject")}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {assignment.schoolClass?.className ?? "Class"}
+                          {assignment.schoolClass?.className ?? t("teachers.fallbackClass")}
                         </p>
                       </div>
                     </div>
@@ -193,7 +199,7 @@ export function TeacherDetailClient({
               {(teacher.classTeacherFor ?? []).length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {(teacher.classTeacherFor ?? []).map((schoolClass) => (
-                    <Badge key={schoolClass.id} variant="secondary">Class teacher · {schoolClass.className}</Badge>
+                    <Badge key={schoolClass.id} variant="secondary">{t("teachers.classTeacherRole", { name: schoolClass.className })}</Badge>
                   ))}
                 </div>
               ) : null}
@@ -224,19 +230,19 @@ export function TeacherDetailClient({
 
       {/* Status AlertDialog */}
       <AlertDialog open={statusOpen} onOpenChange={setStatusOpen}>
-        <AlertDialogContent open={statusOpen} onOpenChange={setStatusOpen}>
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{teacher.status === "ACTIVE" ? "Deactivate Teacher?" : "Reactivate Teacher?"}</AlertDialogTitle>
+            <AlertDialogTitle>{teacher.status === "ACTIVE" ? t("teachers.dialogDeactivateTitle") : t("teachers.dialogReactivateTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {teacher.status === "ACTIVE"
-                ? `${fullName(teacher)} will be marked as inactive but their profile is kept and the account can be reactivated later.`
-                : `${fullName(teacher)} will be marked as active again.`}
+                ? t("teachers.dialogDeactivateDescription", { name: fullName(teacher) })
+                : t("teachers.dialogReactivateDescription", { name: fullName(teacher) })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setStatusOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setStatusOpen(false)}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => { if (!pending) void handleStatusChange(); }}>
-              {teacher.status === "ACTIVE" ? "Deactivate" : "Reactivate"}
+              {teacher.status === "ACTIVE" ? t("teachers.actionDeactivate") : t("teachers.actionActivate")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

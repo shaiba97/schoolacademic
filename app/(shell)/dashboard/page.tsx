@@ -66,11 +66,6 @@ export default function DashboardPage() {
     { href: "/academics/grades", labelKey: "dashboard.href.grades", descriptionKey: "dashboard.href.gradesDesc", icon: Layers },
     { href: "/academics/subjects", labelKey: "dashboard.href.subjects", descriptionKey: "dashboard.href.subjectsDesc", icon: BookOpen },
     { href: "/academics/timetable", labelKey: "dashboard.href.timetable", descriptionKey: "dashboard.href.timetableDesc", icon: CalendarClock },
-    { href: "/examinations", labelKey: "dashboard.href.exams", descriptionKey: "dashboard.href.examsDesc", icon: FileText },
-    { href: "/students/all", labelKey: "dashboard.href.students", descriptionKey: "dashboard.href.studentsDesc", icon: Users },
-    { href: "/departments", labelKey: "dashboard.href.departments", descriptionKey: "dashboard.href.departmentsDesc", icon: Building2 },
-    { href: "/teachers", labelKey: "dashboard.href.teachers", descriptionKey: "dashboard.href.teachersDesc", icon: Contact },
-    { href: "/promotion", labelKey: "dashboard.href.promotion", descriptionKey: "dashboard.href.promotionDesc", icon: TrendingUp },
   ];
 
   const tile = (label: string, value: React.ReactNode, hint?: string) => (

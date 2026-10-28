@@ -240,8 +240,8 @@ function ProfileTab({
           <Button type="button" variant="outline" size="sm" onClick={() => actions.openStatus(student, "POSTPONE")}>
             <Clock size={14} /> Postpone
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => actions.transferTo(student)}>
-            <TrendingUp size={14} /> Transfer
+          <Button type="button" variant="outline" size="sm" onClick={() => actions.openStatus(student, "POSTPONE")}>
+            <Clock size={14} /> Postpone
           </Button>
           <Button
             type="button"
@@ -260,7 +260,7 @@ function ProfileTab({
 
 function EnrollmentsTab({ enrollments }: { enrollments: ApiEnrollment[] }) {
   if (enrollments.length === 0) {
-    return <EmptyState title="No enrollments" description="This student has no enrollment records. Enrollments change via the Transfer and Promotion flows." />;
+    return <EmptyState title="No enrollments" description="Enrollments are managed through the enrollment flow." />;
   }
   const columns: Column<ApiEnrollment>[] = [
     { id: "year", header: "Year", accessor: (enrollment) => enrollment.academicYear?.name ?? "Unknown year", sortable: true },
@@ -285,9 +285,9 @@ function EnrollmentsTab({ enrollments }: { enrollments: ApiEnrollment[] }) {
         columns={columns}
         getRowId={(enrollment) => enrollment.id}
         emptyTitle="No enrollments"
-        emptyDescription="This student has no enrollment records. Enrollments change via the Transfer and Promotion flows."
+        emptyDescription="Enrollments are managed through the enrollment flow."
       />
-      <p className="text-xs text-muted-foreground">Read-only history — enrollment changes happen via the Transfer and Promotion flows, not here.</p>
+      <p className="text-xs text-muted-foreground">Read-only history — enrollment changes happen through the enrollment flow.</p>
     </div>
   );
 }

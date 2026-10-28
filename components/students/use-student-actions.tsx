@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
@@ -19,6 +17,7 @@ import { archiveStudent, deleteStudent, updateStudentStatus } from "@/lib/api/st
 import type { ApiStudent } from "@/lib/api/types";
 import { studentFullName } from "@/lib/api/mappers";
 import { academicErrorMessage } from "@/components/academics/academic-utils";
+import { useI18n } from "@/lib/i18n/locale-provider";
 
 export function studentStatusBadgeVariant(
   status: string,
@@ -26,8 +25,6 @@ export function studentStatusBadgeVariant(
   switch (status) {
     case "ACTIVE":
       return "success";
-    case "TRANSFERRED":
-      return "info";
     case "GRADUATED":
       return "purple";
     case "POSTPONED":
@@ -57,7 +54,7 @@ export function useStudentActions({
   onError: (message: string) => void;
   onDeleted?: (deletedId: string) => void;
 }) {
-  const router = useRouter();
+  const { t } = useI18n();
   const [statusTarget, setStatusTarget] = React.useState<{ student: ApiStudent; mode: StatusMode } | null>(null);
   const [statusReason, setStatusReason] = React.useState("");
   const [statusPending, setStatusPending] = React.useState(false);
@@ -67,12 +64,12 @@ export function useStudentActions({
   const [archiveTarget, setArchiveTarget] = React.useState<ApiStudent | null>(null);
   const [archivePending, setArchivePending] = React.useState(false);
   const [admissionTarget, setAdmissionTarget] = React.useState<ApiStudent | null>(null);
-  const [actionPending, setActionPending] = React.useState(false);
+  const [actionPending] = React.useState(false);
 
   async function handleStatusConfirm() {
     if (!statusTarget || statusPending) return;
     if (!statusReason.trim()) {
-      setStatusError("A reason is required.");
+      setStatusError(t("students.reasonRequired"));
       return;
     }
     setStatusPending(true);
@@ -86,7 +83,7 @@ export function useStudentActions({
       setStatusTarget(null);
       setStatusReason("");
     } catch (cause) {
-      setStatusError(academicErrorMessage(cause, "Unable to update status"));
+      setStatusError(academicErrorMessage(cause, t("students.errorStatusUpdate")));
     } finally {
       setStatusPending(false);
     }
@@ -102,7 +99,7 @@ export function useStudentActions({
       if (onDeleted) onDeleted(id);
       else onChanged({ ...deleteTarget });
     } catch (cause) {
-      onError(academicErrorMessage(cause, "Unable to delete student"));
+      onError(academicErrorMessage(cause, t("students.errorDeleteFailed")));
       setDeleteTarget(null);
     } finally {
       setDeletePending(false);
@@ -117,7 +114,7 @@ export function useStudentActions({
       onChanged(updated);
       setArchiveTarget(null);
     } catch (cause) {
-      onError(academicErrorMessage(cause, "Unable to archive student"));
+      onError(academicErrorMessage(cause, t("students.errorArchiveFailed")));
       setArchiveTarget(null);
     } finally {
       setArchivePending(false);
@@ -142,10 +139,6 @@ export function useStudentActions({
     setAdmissionTarget(student);
   }
 
-  function transferTo(student: ApiStudent) {
-    router.push(`/students/transfers?studentId=${student.id}`);
-  }
-
   const dialogs = (
     <>
       <AlertDialog
@@ -156,17 +149,17 @@ export function useStudentActions({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Archive student?</AlertDialogTitle>
+            <AlertDialogTitle>{t("students.archiveTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {archiveTarget
-                ? `${studentFullName(archiveTarget)} will be marked WITHDRAWN. Records are kept and the student can be reactivated later.`
-                : "Archive this student."}
+                ? t("students.archiveDescription", { name: studentFullName(archiveTarget) })
+                : t("students.archiveFallback")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setArchiveTarget(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setArchiveTarget(null)}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => void handleArchiveConfirm()}>
-              {archivePending ? "Archiving…" : "Archive"}
+              {archivePending ? t("students.archiving") : t("students.actionArchive")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -184,21 +177,27 @@ export function useStudentActions({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {statusTarget?.mode === "FIRE" ? "Fire student?" : "Postpone student?"}
+              {statusTarget?.mode === "FIRE" ? t("students.statusFireTitle") : t("students.statusPostponeTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {statusTarget
-                ? `${studentFullName(statusTarget.student)} will be marked ${statusTarget.mode === "FIRE" ? "FIRED" : "POSTPONED"}. A reason is required and is recorded on the student file.`
-                : "Update student status."}
+                ? t("students.statusDescription", {
+                    name: studentFullName(statusTarget.student),
+                    status:
+                      statusTarget.mode === "FIRE"
+                        ? t("students.statusFired")
+                        : t("students.statusPostponed"),
+                  })
+                : t("students.statusFallback")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2">
-            <label htmlFor="student-status-reason" className="text-sm font-medium">Reason *</label>
+            <label htmlFor="student-status-reason" className="text-sm font-medium">{t("students.reasonLabel")}</label>
             <Input
               id="student-status-reason"
               value={statusReason}
               onChange={(event) => setStatusReason(event.target.value)}
-              placeholder="e.g. Repeated misconduct after warnings"
+              placeholder={t("students.reasonPlaceholder")}
               autoFocus
             />
             {statusError ? (
@@ -206,9 +205,13 @@ export function useStudentActions({
             ) : null}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setStatusTarget(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setStatusTarget(null)}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => void handleStatusConfirm()}>
-              {statusPending ? "Saving…" : statusTarget?.mode === "FIRE" ? "Fire" : "Postpone"}
+              {statusPending
+                ? t("common.saving")
+                : statusTarget?.mode === "FIRE"
+                  ? t("students.actionFire")
+                  : t("students.actionPostpone")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -222,17 +225,17 @@ export function useStudentActions({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete student?</AlertDialogTitle>
+            <AlertDialogTitle>{t("students.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget
-                ? `${studentFullName(deleteTarget)} and ALL linked records (enrollments, results, attendance, guardian links) will be permanently deleted. This cannot be undone — consider Archive instead.`
-                : "Delete this student."}
+                ? t("students.deleteDescription", { name: studentFullName(deleteTarget) })
+                : t("students.deleteFallback")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteTarget(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeleteTarget(null)}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => void handleDelete()}>
-              {deletePending ? "Deleting…" : "Delete permanently"}
+              {deletePending ? t("students.deletingEllipsis") : t("students.deletePermanently")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -255,7 +258,6 @@ export function useStudentActions({
     openDelete,
     openAdmission,
     openArchive,
-    transferTo,
     archive: handleArchiveConfirm,
   };
 }

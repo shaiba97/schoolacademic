@@ -90,12 +90,29 @@ export type ApiStudentResult = {
   createdAt?: string;
   examSubject?: {
     maxMarks?: number | string | null;
-    exam?: { id: string; name: string; status: string; publishedAt?: string | null } | null;
+    passingMarks?: number | string | null;
+    exam?: {
+      id: string;
+      name: string;
+      status: string;
+      publishedAt?: string | null;
+      examTypeId?: string | null;
+      startsOn?: string | null;
+      endsOn?: string | null;
+      academicYear?: { id: string; name: string; startsOn?: string; endsOn?: string; isCurrent?: boolean } | null;
+    } | null;
     classSubject?: {
       schoolClass?: { id: string; className: string } | null;
       subject?: { id: string; name: string } | null;
     } | null;
   } | null;
+};
+
+export type ApiTenantResult = ApiStudentResult & {
+  student: Pick<
+    ApiStudent,
+    "id" | "roleNumber" | "firstName" | "lastName" | "educationLevel" | "grade" | "status"
+  >;
 };
 
 export type ApiStudentAttendanceRecord = {
@@ -271,6 +288,7 @@ export type ApiHall = {
   name: string;
   capacity: number;
   type: "PHYSICAL" | "VIRTUAL";
+  roomNumber?: number;
 };
 
 export type ApiExamSubject = {
@@ -413,7 +431,7 @@ export type ApiInvigilationDuty = {
 };
 
 export type CreateExamTypePayload = { name: string; defaultWeight?: number };
-export type CreateHallPayload = { name: string; capacity: number; type?: "PHYSICAL" | "VIRTUAL" };
+export type CreateHallPayload = { name: string; capacity: number; type?: "PHYSICAL" | "VIRTUAL"; roomNumber?: number };
 export type CreateExamSubjectPayload = {
   classSubjectId: string;
   examDate?: string;
@@ -421,6 +439,7 @@ export type CreateExamSubjectPayload = {
   passingMarks?: number;
   weight?: number;
   gradingScaleId?: string;
+  sample?: { objectKey: string; originalName: string; size: number };
 };
 export type CreateExamPayload = {
   academicYearId: string;
