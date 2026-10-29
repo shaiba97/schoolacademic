@@ -1,12 +1,12 @@
 /**
  * Server-only session helpers. Importing this module pulls in next/headers,
- * so it must never reach a client component — the browser path lives in
+ * so it must never reach a client component â€” the browser path lives in
  * lib/api/client.ts and the same-origin proxy in app/api/backend.
  */
 import { cookies } from "next/headers";
 
 const API_URL =
-  process.env.ACADEMIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+  process.env.ACADEMIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://schoolbackend-7n8a.onrender.com/api";
 
 const TOKEN_COOKIE = "ac_token";
 const TENANT_COOKIE = "ac_tenant";

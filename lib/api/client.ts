@@ -1,7 +1,7 @@
 import { notifyTenantLock } from "@/lib/tenant-lock";
 
 const BACKEND_URL =
-  process.env.ACADEMIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+  process.env.ACADEMIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://schoolbackend-7n8a.onrender.com/api";
 
 export class ApiError extends Error {
   status: number;
@@ -64,7 +64,7 @@ export async function academicApiFetch<T>(path: string, init: RequestInit = {}):
   const response = await fetch(`/api/backend${path}`, { ...init, headers, credentials: "include", cache: "no-store" });
   if (response.status === 401 && window.location.pathname !== "/login") {
     window.location.assign("/login");
-    throw new ApiError("Session expired — please sign in again", 401);
+    throw new ApiError("Session expired â€” please sign in again", 401);
   }
   return parseResponse<T>(response);
 }
