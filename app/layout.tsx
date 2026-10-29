@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LOCALE_STORAGE_KEY, LocaleProvider } from "@/lib/i18n/locale-provider";
 import "./globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <LocaleProvider>{children}</LocaleProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
