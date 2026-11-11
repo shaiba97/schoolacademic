@@ -1,7 +1,7 @@
 import { notifyTenantLock } from "@/lib/tenant-lock";
 
 const BACKEND_URL =
-  process.env.ACADEMIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://schoolbackend-7n8a.onrender.com/api";
+  process.env.ACADEMIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://schoolbackend-gilt.vercel.app/api";
 
 export class ApiError extends Error {
   status: number;

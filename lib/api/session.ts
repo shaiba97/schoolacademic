@@ -6,7 +6,7 @@
 import { cookies } from "next/headers";
 
 const API_URL =
-  process.env.ACADEMIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://schoolbackend-7n8a.onrender.com/api";
+  process.env.ACADEMIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://schoolbackend-gilt.vercel.app/api";
 
 const TOKEN_COOKIE = "ac_token";
 const TENANT_COOKIE = "ac_tenant";
